@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=busybox
 
 ################################################################################
 # test-wrapper-manually.sh

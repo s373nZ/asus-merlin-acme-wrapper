@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=busybox
 
 ################################################################################
 # test-runner.sh
@@ -79,16 +80,14 @@ else
 fi
 
 # Test --help
-output=$(/jffs/sbin/asus-wrapper-acme.sh --help 2>&1)
-if [ $? -eq 0 ]; then
+if /jffs/sbin/asus-wrapper-acme.sh --help >/dev/null 2>&1; then
     echo_pass "--help passes through correctly"
 else
     echo_fail "--help did not pass through"
 fi
 
 # Test --list
-output=$(/jffs/sbin/asus-wrapper-acme.sh --list 2>&1)
-if [ $? -eq 0 ]; then
+if /jffs/sbin/asus-wrapper-acme.sh --list >/dev/null 2>&1; then
     echo_pass "--list passes through correctly"
 else
     echo_fail "--list did not pass through"
@@ -129,7 +128,7 @@ export ASUS_WRAPPER_DEBUG=1
     --issue \
     --standalone \
     --httpport 80 \
-    2>&1 > /tmp/test-output.log
+    > /tmp/test-output.log 2>&1
 
 # Check if mock acme.sh was called
 if [ -f /tmp/acme-calls.log ]; then
@@ -175,7 +174,7 @@ rm -f /tmp/acme-calls.log
     --cert-home /jffs/.le \
     --domain multi.example.com \
     --issue \
-    2>&1 > /tmp/test-output.log
+    > /tmp/test-output.log 2>&1
 
 if [ -f /tmp/acme-calls.log ]; then
     # Count --domain flags in the call
@@ -205,7 +204,7 @@ echo "test-env.example.com" > /jffs/.le/domains
     --cert-home /jffs/.le \
     --domain test-env.example.com \
     --issue \
-    2>&1 > /tmp/test-output.log
+    > /tmp/test-output.log 2>&1
 
 if [ -f /tmp/acme-calls.log ]; then
     if grep -q "dns_cf" /tmp/acme-calls.log; then

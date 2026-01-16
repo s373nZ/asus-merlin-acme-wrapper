@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=busybox
 
 ################################################################################
 # validate-acme-wrapper.sh
@@ -177,7 +178,7 @@ print_info "Configured DNS API: ${dns_api:-not set}"
 print_header "Test 4: Domains File Content"
 
 if [ -f "/jffs/.le/domains" ]; then
-    line_count=$(grep -v "^$" /jffs/.le/domains | grep -v "^#" | wc -l)
+    line_count=$(grep -cvE '^$|^#' /jffs/.le/domains)
     print_info "Domains file has $line_count non-empty line(s)"
 
     while IFS= read -r line; do

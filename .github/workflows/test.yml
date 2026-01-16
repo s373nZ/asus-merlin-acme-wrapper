@@ -13,13 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ShellCheck
-        run: sudo apt-get install -y shellcheck
+      - name: Install ShellCheck 0.11.0
+        run: |
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz" | tar -xJf -
+          sudo cp shellcheck-v0.11.0/shellcheck /usr/local/bin/
+          shellcheck --version
 
       - name: Run ShellCheck on scripts
         run: |
-          shellcheck scripts/*.sh
-          shellcheck tools/*.sh
+          # Exclude:
+          # SC2034: Unused variables (some are parsed but reserved for future use)
+          shellcheck --exclude=SC2034 scripts/*.sh tools/*.sh tests/*.sh
 
   docker-test:
     name: Docker Tests
