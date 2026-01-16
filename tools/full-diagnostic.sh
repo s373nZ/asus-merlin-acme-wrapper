@@ -7,7 +7,7 @@
 # Uses Let's Encrypt STAGING environment to avoid rate limits
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== Full Certificate Diagnostic ==="

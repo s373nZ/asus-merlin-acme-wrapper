@@ -7,7 +7,7 @@
 # Tests prerequisites, configuration, and certificate setup
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 #
 # Usage: ./validate-acme-wrapper.sh
 ################################################################################

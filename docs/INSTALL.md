@@ -52,7 +52,7 @@ You'll need API credentials for your DNS provider. See [DNS_PROVIDERS.md](DNS_PR
 mkdir -p /jffs/sbin
 
 # Download the wrapper
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/asus-wrapper-acme.sh \
+curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/scripts/asus-wrapper-acme.sh \
   -o /jffs/sbin/asus-wrapper-acme.sh
 
 # Make executable
@@ -163,7 +163,7 @@ tail -f /tmp/syslog.log | grep acme
 
 ```bash
 # Download and run validation script
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh \
+curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh \
   -o /tmp/validate-acme-wrapper.sh
 chmod +x /tmp/validate-acme-wrapper.sh
 /tmp/validate-acme-wrapper.sh
@@ -200,7 +200,7 @@ If installation fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) or run:
 
 ```bash
 # Quick diagnostic
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/tools/diagnose-acme-issue.sh | sh
+curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/tools/diagnose-acme-issue.sh | sh
 ```
 
 ## Uninstallation

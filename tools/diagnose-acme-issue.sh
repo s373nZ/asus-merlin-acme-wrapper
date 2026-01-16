@@ -6,7 +6,7 @@
 # Diagnostic script to help troubleshoot certificate issuance failures
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== ACME Wrapper Diagnostic Tool ==="

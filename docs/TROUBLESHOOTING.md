@@ -7,7 +7,7 @@ This guide covers common issues and their solutions when using asus-merlin-acme-
 Run the validation script first:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh | sh
+curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh | sh
 ```
 
 Or if already installed:
