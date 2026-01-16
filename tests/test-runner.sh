@@ -8,27 +8,34 @@
 # Runs in Docker container with mocked environment
 ################################################################################
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+# Colors (disabled if not running in a terminal)
+if [ -t 1 ]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    NC='\033[0m'
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    NC=''
+fi
 
 PASS=0
 FAIL=0
 
 echo_pass() {
-    echo "${GREEN}[PASS]${NC} $1"
+    printf '%b[PASS]%b %s\n' "$GREEN" "$NC" "$1"
     PASS=$((PASS + 1))
 }
 
 echo_fail() {
-    echo "${RED}[FAIL]${NC} $1"
+    printf '%b[FAIL]%b %s\n' "$RED" "$NC" "$1"
     FAIL=$((FAIL + 1))
 }
 
 echo_info() {
-    echo "${YELLOW}[INFO]${NC} $1"
+    printf '%b[INFO]%b %s\n' "$YELLOW" "$NC" "$1"
 }
 
 echo ""
@@ -255,9 +262,9 @@ echo "Failed: $FAIL"
 echo ""
 
 if [ $FAIL -eq 0 ]; then
-    echo "${GREEN}All tests passed!${NC}"
+    printf '%bAll tests passed!%b\n' "$GREEN" "$NC"
     exit 0
 else
-    echo "${RED}Some tests failed.${NC}"
+    printf '%bSome tests failed.%b\n' "$RED" "$NC"
     exit 1
 fi
