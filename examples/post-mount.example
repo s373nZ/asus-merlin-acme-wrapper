@@ -1,0 +1,32 @@
+#!/bin/sh
+
+################################################################################
+# post-mount script for asus-merlin-acme-ca
+# Location: /jffs/scripts/post-mount
+#
+# This script runs after USB drives are mounted, ensuring Entware is available
+# before we try to use acme.sh
+################################################################################
+
+# Wait for Entware to be fully available
+# This is important because acme.sh is installed via Entware on /opt
+sleep 5
+
+# Mount the ACME wrapper over the firmware's acme.sh
+# This intercepts certificate operations to use DNS validation
+if [ -f /jffs/sbin/asus-wrapper-acme.sh ]; then
+    /bin/mount -o bind /jffs/sbin/asus-wrapper-acme.sh /usr/sbin/acme.sh
+    logger -t "post-mount" "ACME wrapper mounted"
+fi
+
+# Optional: Mount custom DNS API scripts if you have any
+# Uncomment if you're using custom DNS API plugins
+# if [ -d /jffs/sbin/dnsapi ]; then
+#     /bin/mount -o bind /jffs/sbin/dnsapi /usr/sbin/dnsapi
+#     logger -t "post-mount" "Custom dnsapi mounted"
+# fi
+
+# Optional: Set environment variables for the wrapper
+# These can also be set in /jffs/configs/profile.add
+# export ASUS_WRAPPER_DNS_API=dns_cf
+# export ASUS_WRAPPER_DEBUG=0
