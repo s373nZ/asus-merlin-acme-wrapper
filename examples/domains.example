@@ -1,0 +1,33 @@
+# asus-merlin-acme-ca domains configuration
+# Location: /jffs/.le/domains
+#
+# Format: domain1|domain2|domain3|...
+# - One certificate per line
+# - Domains separated by pipes (|)
+# - Supports wildcards (*.domain.com)
+# - First non-wildcard domain becomes certificate directory name
+# - Comments start with #
+# - Empty lines are ignored
+
+# Example 1: Wildcard certificate with base domain
+# This creates a certificate valid for:
+#   - yourdomain.com
+#   - *.yourdomain.com (any subdomain)
+*.yourdomain.com|yourdomain.com
+
+# Example 2: Multiple specific subdomains (no wildcard)
+# Useful when you only need specific subdomains
+# www.example.com|api.example.com|mail.example.com
+
+# Example 3: Mixed - wildcard plus specific subdomains
+# Sometimes useful for clarity or specific needs
+# *.yourdomain.com|yourdomain.com|www.yourdomain.com
+
+# Example 4: Multiple certificates (one per line)
+# Each line creates a separate certificate
+# *.domain1.com|domain1.com
+# *.domain2.com|domain2.com
+
+# Example 5: Single domain (no wildcard)
+# For simple cases where you don't need wildcards
+# myrouter.dyndns.org

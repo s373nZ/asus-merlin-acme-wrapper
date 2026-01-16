@@ -1,0 +1,76 @@
+# acme.sh account configuration
+# Location: /jffs/.le/account.conf
+#
+# This file contains your DNS provider API credentials
+# IMPORTANT: Protect this file! chmod 600 /jffs/.le/account.conf
+#
+# Only include the section for your DNS provider
+
+################################################################################
+# AWS Route53
+################################################################################
+# Create an IAM user with Route53 permissions and generate access keys
+# See docs/DNS_PROVIDERS.md for IAM policy example
+
+# AWS_ACCESS_KEY_ID='AKIAXXXXXXXXXXXXXXXX'
+# AWS_SECRET_ACCESS_KEY='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+
+################################################################################
+# Cloudflare
+################################################################################
+# Create an API token at: https://dash.cloudflare.com/profile/api-tokens
+# Use the "Edit zone DNS" template or create custom with Zone:DNS:Edit permission
+# Get Zone ID from your domain's Overview page
+
+# CF_Token='your-api-token-here'
+# CF_Zone_ID='your-zone-id-here'
+
+# Alternative: Global API Key (less secure, not recommended)
+# CF_Key='your-global-api-key'
+# CF_Email='your-cloudflare-email'
+
+################################################################################
+# GoDaddy
+################################################################################
+# Get API credentials from: https://developer.godaddy.com/
+# Use Production keys, not OTE (test) keys
+
+# GD_Key='your-key-here'
+# GD_Secret='your-secret-here'
+
+################################################################################
+# DigitalOcean
+################################################################################
+# Create token at: https://cloud.digitalocean.com/account/api/tokens
+# Token needs Write scope
+
+# DO_API_KEY='your-token-here'
+
+################################################################################
+# Namecheap
+################################################################################
+# Enable API access in your Namecheap account
+# You must whitelist your IP address
+
+# NAMECHEAP_USERNAME='your-username'
+# NAMECHEAP_API_KEY='your-api-key'
+# NAMECHEAP_SOURCEIP='your-whitelisted-ip'
+
+################################################################################
+# Linode
+################################################################################
+# Create token at: https://cloud.linode.com/profile/tokens
+
+# LINODE_V4_API_KEY='your-token-here'
+
+################################################################################
+# Vultr
+################################################################################
+# Get API key from: https://my.vultr.com/settings/#settingsapi
+
+# VULTR_API_KEY='your-api-key'
+
+################################################################################
+# For other providers, see:
+# https://github.com/acmesh-official/acme.sh/wiki/dnsapi
+################################################################################

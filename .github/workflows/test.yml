@@ -1,0 +1,48 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on scripts
+        run: |
+          shellcheck scripts/*.sh
+          shellcheck tools/*.sh
+
+  docker-test:
+    name: Docker Tests
+    runs-on: ubuntu-latest
+    needs: shellcheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build test container
+        run: docker build -t acme-wrapper-test -f tests/Dockerfile .
+
+      - name: Run tests
+        run: docker run --rm acme-wrapper-test
+
+  syntax-check:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell script syntax
+        run: |
+          for script in scripts/*.sh tools/*.sh; do
+            echo "Checking $script..."
+            sh -n "$script"
+          done

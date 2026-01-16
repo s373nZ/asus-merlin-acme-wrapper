@@ -1,0 +1,40 @@
+# Logs
+*.log
+*.log.*
+
+# Backups
+*.backup
+*.bak
+*.old
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# Test output
+tests/output/
+tests/tmp/
+/tmp/
+
+# Local configuration (don't commit real credentials)
+account.conf
+*.key
+*.pem
+*.cer
+
+# Build artifacts
+*.tar.gz
+*.zip
