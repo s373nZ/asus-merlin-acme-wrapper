@@ -135,14 +135,14 @@ if [ -f /tmp/acme-calls.log ]; then
     echo_pass "acme.sh was called"
 
     # Check that --standalone was removed
-    if grep -q "\-\-standalone" /tmp/acme-calls.log; then
+    if grep -q -- "--standalone" /tmp/acme-calls.log; then
         echo_fail "--standalone was not removed from call"
     else
         echo_pass "--standalone was correctly removed"
     fi
 
     # Check that --dns was added
-    if grep -q "\-\-dns" /tmp/acme-calls.log; then
+    if grep -q -- "--dns" /tmp/acme-calls.log; then
         echo_pass "--dns flag was added"
     else
         echo_fail "--dns flag was not added"
@@ -178,7 +178,7 @@ rm -f /tmp/acme-calls.log
 
 if [ -f /tmp/acme-calls.log ]; then
     # Count --domain flags in the call
-    domain_count=$(grep -o "\-\-domain" /tmp/acme-calls.log | wc -l)
+    domain_count=$(grep -o -- "--domain" /tmp/acme-calls.log | wc -l)
     if [ "$domain_count" -ge 2 ]; then
         echo_pass "Multiple domains passed to acme.sh ($domain_count domains)"
     else
