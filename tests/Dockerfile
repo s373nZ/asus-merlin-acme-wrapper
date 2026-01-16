@@ -1,4 +1,6 @@
-# Dockerfile for testing asus-merlin-acme-ca
+# syntax=docker/dockerfile:1.4
+
+# Dockerfile for testing asus-merlin-acme-wrapper
 #
 # This creates a minimal environment that simulates the router filesystem
 # for testing the wrapper script without an actual router.
@@ -28,7 +30,7 @@ RUN mkdir -p /jffs/sbin \
     && mkdir -p /tmp
 
 # Create mock acme.sh that logs calls and simulates success
-RUN cat > /opt/home/acme.sh/acme.sh << 'MOCKEOF'
+RUN cat > /opt/home/acme.sh/acme.sh <<MOCKEOF
 #!/bin/sh
 # Mock acme.sh for testing
 echo "Mock acme.sh called with: $@" >> /tmp/acme-calls.log
@@ -80,7 +82,7 @@ RUN chmod +x /jffs/sbin/*.sh /jffs/tools/*.sh 2>/dev/null || true
 RUN echo "*.test.example.com|test.example.com" > /jffs/.le/domains
 
 # Create mock account.conf
-RUN cat > /jffs/.le/account.conf << 'EOF'
+RUN cat > /jffs/.le/account.conf <<EOF
 # Mock credentials for testing
 AWS_ACCESS_KEY_ID='MOCK_KEY'
 AWS_SECRET_ACCESS_KEY='MOCK_SECRET'
