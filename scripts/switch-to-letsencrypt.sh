@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=busybox
 
 ################################################################################
 # switch-to-letsencrypt.sh
@@ -16,9 +17,7 @@ echo ""
 
 # Step 1: Set Let's Encrypt as default CA
 echo "Step 1: Configuring Let's Encrypt as default Certificate Authority..."
-/opt/home/acme.sh/acme.sh --set-default-ca --server letsencrypt
-
-if [ $? -eq 0 ]; then
+if /opt/home/acme.sh/acme.sh --set-default-ca --server letsencrypt; then
     echo "  [OK] Let's Encrypt is now the default CA"
 else
     echo "  [FAIL] Failed to set default CA"
