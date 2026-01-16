@@ -3,7 +3,7 @@
 ################################################################################
 # test-runner.sh
 #
-# Test suite for asus-merlin-acme-ca wrapper script
+# Test suite for asus-merlin-acme-wrapper wrapper script
 # Runs in Docker container with mocked environment
 ################################################################################
 
@@ -32,7 +32,7 @@ echo_info() {
 
 echo ""
 echo "=========================================="
-echo "  asus-merlin-acme-ca Test Suite"
+echo "  asus-merlin-acme-wrapper Test Suite"
 echo "=========================================="
 echo ""
 

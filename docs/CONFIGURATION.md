@@ -1,6 +1,6 @@
 # Configuration Reference
 
-This document covers all configuration options for asus-merlin-acme-ca.
+This document covers all configuration options for asus-merlin-acme-wrapper.
 
 ## File Locations
 

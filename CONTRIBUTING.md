@@ -1,4 +1,4 @@
-# Contributing to asus-merlin-acme-ca
+# Contributing to asus-merlin-acme-wrapper
 
 Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
 
@@ -23,8 +23,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/asus-merlin-acme-ca.git
-   cd asus-merlin-acme-ca
+   git clone https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper.git
+   cd asus-merlin-acme-wrapper
    ```
 3. Create a branch for your changes:
    ```bash
@@ -117,7 +117,7 @@ was chosen.
 
 Include:
 - Router model and firmware version
-- asus-merlin-acme-ca version
+- asus-merlin-acme-wrapper version
 - Steps to reproduce
 - Expected vs actual behavior
 - Relevant log output

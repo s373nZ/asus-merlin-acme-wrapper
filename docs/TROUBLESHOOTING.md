@@ -1,13 +1,13 @@
 # Troubleshooting Guide
 
-This guide covers common issues and their solutions when using asus-merlin-acme-ca.
+This guide covers common issues and their solutions when using asus-merlin-acme-wrapper.
 
 ## Quick Diagnostics
 
 Run the validation script first:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/tools/validate-acme-wrapper.sh | sh
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh | sh
 ```
 
 Or if already installed:
