@@ -30,7 +30,7 @@ RUN mkdir -p /jffs/sbin \
     && mkdir -p /tmp
 
 # Create mock acme.sh that logs calls and simulates success
-RUN cat > /opt/home/acme.sh/acme.sh <<MOCKEOF
+RUN cat > /opt/home/acme.sh/acme.sh <<'MOCKEOF'
 #!/bin/sh
 # Mock acme.sh for testing
 echo "Mock acme.sh called with: $@" >> /tmp/acme-calls.log
@@ -53,9 +53,9 @@ case "$1" in
         # Simulate successful certificate issuance
         echo "Mock: Processing certificate request..."
         # Create mock certificate if --issue is in args
-        if echo "$@" | grep -q "\-\-issue"; then
+        if echo "$@" | grep -q -- "--issue"; then
             # Extract domain from args
-            domain=$(echo "$@" | grep -oE '\-\-domain [^ ]+' | head -1 | cut -d' ' -f2)
+            domain=$(echo "$@" | grep -oE -- '--domain [^ ]+' | head -1 | cut -d' ' -f2)
             if [ -n "$domain" ]; then
                 cert_dir="/jffs/.le/${domain}_ecc"
                 mkdir -p "$cert_dir"
