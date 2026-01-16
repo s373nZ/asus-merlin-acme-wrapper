@@ -7,7 +7,7 @@
 # Bypasses the wrapper to test acme.sh directly with your configuration
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== Manual Wrapper Test ==="

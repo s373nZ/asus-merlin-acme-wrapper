@@ -7,7 +7,7 @@
 # Then test certificate issuance
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== Switch to Let's Encrypt and Test ==="

@@ -4,16 +4,16 @@
 # install.sh
 #
 # Installer script for asus-merlin-acme-wrapper
-# Run with: curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/install.sh | sh
+# Run with: curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/scripts/install.sh | sh
 #
 # Part of asus-merlin-acme-wrapper
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
+# https://github.com/s373nZ/asus-merlin-acme-wrapper
 ################################################################################
 
 set -e
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main"
+REPO_URL="https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main"
 INSTALL_DIR="/jffs/sbin"
 LE_DIR="/jffs/.le"
 SCRIPTS_DIR="/jffs/scripts"
@@ -202,5 +202,5 @@ echo ""
 echo "5. Verify installation:"
 echo "   /jffs/tools/validate-acme-wrapper.sh"
 echo ""
-echo "Documentation: https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper"
+echo "Documentation: https://github.com/s373nZ/asus-merlin-acme-wrapper"
 echo ""

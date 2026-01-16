@@ -23,7 +23,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper.git
+   git clone https://github.com/s373nZ/asus-merlin-acme-wrapper.git
    cd asus-merlin-acme-wrapper
    ```
 3. Create a branch for your changes:
