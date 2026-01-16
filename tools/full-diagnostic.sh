@@ -6,8 +6,8 @@
 # Comprehensive diagnostic to identify certificate issuance issues
 # Uses Let's Encrypt STAGING environment to avoid rate limits
 #
-# Part of asus-merlin-acme-ca
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-ca
+# Part of asus-merlin-acme-wrapper
+# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== Full Certificate Diagnostic ==="

@@ -6,8 +6,8 @@
 # Configure acme.sh to use Let's Encrypt instead of ZeroSSL
 # Then test certificate issuance
 #
-# Part of asus-merlin-acme-ca
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-ca
+# Part of asus-merlin-acme-wrapper
+# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
 ################################################################################
 
 echo "=== Switch to Let's Encrypt and Test ==="

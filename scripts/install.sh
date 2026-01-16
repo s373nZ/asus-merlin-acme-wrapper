@@ -3,17 +3,17 @@
 ################################################################################
 # install.sh
 #
-# Installer script for asus-merlin-acme-ca
-# Run with: curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/scripts/install.sh | sh
+# Installer script for asus-merlin-acme-wrapper
+# Run with: curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/install.sh | sh
 #
-# Part of asus-merlin-acme-ca
-# https://github.com/YOUR_USERNAME/asus-merlin-acme-ca
+# Part of asus-merlin-acme-wrapper
+# https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper
 ################################################################################
 
 set -e
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main"
+REPO_URL="https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main"
 INSTALL_DIR="/jffs/sbin"
 LE_DIR="/jffs/.le"
 SCRIPTS_DIR="/jffs/scripts"
@@ -45,7 +45,7 @@ echo_error() {
 
 echo ""
 echo "=========================================="
-echo "  asus-merlin-acme-ca Installer"
+echo "  asus-merlin-acme-wrapper Installer"
 echo "=========================================="
 echo ""
 
@@ -131,7 +131,7 @@ if [ -f "$SCRIPTS_DIR/post-mount" ]; then
         echo_info "Adding wrapper mount to existing post-mount script"
         cat >> "$SCRIPTS_DIR/post-mount" << 'EOF'
 
-# asus-merlin-acme-ca wrapper mount
+# asus-merlin-acme-wrapper wrapper mount
 if [ -f /jffs/sbin/asus-wrapper-acme.sh ]; then
     /bin/mount -o bind /jffs/sbin/asus-wrapper-acme.sh /usr/sbin/acme.sh
 fi
@@ -145,7 +145,7 @@ else
 # Wait for Entware
 sleep 5
 
-# asus-merlin-acme-ca wrapper mount
+# asus-merlin-acme-wrapper wrapper mount
 if [ -f /jffs/sbin/asus-wrapper-acme.sh ]; then
     /bin/mount -o bind /jffs/sbin/asus-wrapper-acme.sh /usr/sbin/acme.sh
 fi
@@ -202,5 +202,5 @@ echo ""
 echo "5. Verify installation:"
 echo "   /jffs/tools/validate-acme-wrapper.sh"
 echo ""
-echo "Documentation: https://github.com/YOUR_USERNAME/asus-merlin-acme-ca"
+echo "Documentation: https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper"
 echo ""

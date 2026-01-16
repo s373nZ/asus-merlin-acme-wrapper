@@ -33,7 +33,7 @@ This wrapper intercepts the firmware's acme.sh calls to add DNS validation suppo
 
 ```bash
 # Download the wrapper script
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/scripts/asus-wrapper-acme.sh \
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/asus-wrapper-acme.sh \
   -o /jffs/sbin/asus-wrapper-acme.sh
 
 # Make it executable
@@ -160,6 +160,6 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 ## Support
 
-- [GitHub Issues](https://github.com/YOUR_USERNAME/asus-merlin-acme-ca/issues) - Bug reports and feature requests
+- [GitHub Issues](https://github.com/YOUR_USERNAME/asus-merlin-acme-wrapper/issues) - Bug reports and feature requests
 - [SNBForums](https://www.snbforums.com/) - Community discussion
 - [Asuswrt-Merlin Wiki](https://github.com/RMerl/asuswrt-merlin.ng/wiki) - General Merlin documentation

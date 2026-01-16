@@ -21,7 +21,7 @@ grep SCRIPT_VERSION /jffs/sbin/asus-wrapper-acme.sh
 
 ```bash
 # Download latest wrapper
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/scripts/asus-wrapper-acme.sh \
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/asus-wrapper-acme.sh \
   -o /jffs/sbin/asus-wrapper-acme.sh
 
 # Make executable
@@ -50,7 +50,7 @@ mount | grep acme.sh
 
 ```bash
 # Run validation
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/tools/validate-acme-wrapper.sh | sh
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/tools/validate-acme-wrapper.sh | sh
 ```
 
 ## Upgrading from Original v0.0.7 (garycnew's version)
@@ -90,7 +90,7 @@ cat /jffs/.le/domains
 
 3. **Install new wrapper:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-ca/main/scripts/asus-wrapper-acme.sh \
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/asus-merlin-acme-wrapper/main/scripts/asus-wrapper-acme.sh \
   -o /jffs/sbin/asus-wrapper-acme.sh
 chmod +x /jffs/sbin/asus-wrapper-acme.sh
 ```

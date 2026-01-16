@@ -84,4 +84,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Attribution
 
 - Original concept and v0.0.7 implementation by [garycnew](https://www.snbforums.com/threads/75233/)
-- Complete rewrite and ongoing maintenance by the asus-merlin-acme-ca contributors
+- Complete rewrite and ongoing maintenance by the asus-merlin-acme-wrapper contributors
