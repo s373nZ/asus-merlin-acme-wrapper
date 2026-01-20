@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feature/**' ]
   pull_request:
     branches: [ main ]
 
@@ -23,7 +23,7 @@ jobs:
         run: |
           # Exclude:
           # SC2034: Unused variables (some are parsed but reserved for future use)
-          shellcheck --exclude=SC2034 scripts/*.sh tools/*.sh tests/*.sh
+          shellcheck --exclude=SC2034 scripts/*.sh tools/*.sh tests/*.sh addon/*.sh
 
   docker-test:
     name: Docker Tests
@@ -46,7 +46,7 @@ jobs:
 
       - name: Check shell script syntax
         run: |
-          for script in scripts/*.sh tools/*.sh; do
+          for script in scripts/*.sh tools/*.sh addon/*.sh; do
             echo "Checking $script..."
             sh -n "$script"
           done
