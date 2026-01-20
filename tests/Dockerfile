@@ -25,8 +25,11 @@ RUN mkdir -p /jffs/sbin \
     && mkdir -p /jffs/.le \
     && mkdir -p /jffs/scripts \
     && mkdir -p /jffs/tools \
+    && mkdir -p /jffs/addons/acme-wrapper/tools \
     && mkdir -p /opt/home/acme.sh \
     && mkdir -p /usr/sbin \
+    && mkdir -p /www/user \
+    && mkdir -p /www/require/modules \
     && mkdir -p /tmp
 
 # Create mock acme.sh that logs calls and simulates success
@@ -71,12 +74,26 @@ esac
 MOCKEOF
 RUN chmod +x /opt/home/acme.sh/acme.sh
 
-# Copy wrapper script and tools
+# Copy wrapper script and tools (legacy locations)
 COPY scripts/asus-wrapper-acme.sh /jffs/sbin/
 COPY tools/*.sh /jffs/tools/
 
+# Copy addon files
+COPY addon/acme-wrapper.sh /jffs/addons/acme-wrapper/
+COPY scripts/asus-wrapper-acme.sh /jffs/addons/acme-wrapper/
+COPY addon/acme-wrapper.asp /jffs/addons/acme-wrapper/
+COPY addon/acme-wrapper.js /jffs/addons/acme-wrapper/
+COPY tools/*.sh /jffs/addons/acme-wrapper/tools/
+
+# Create mock menuTree.js
+RUN echo 'var menuTree = [];' > /www/require/modules/menuTree.js
+
+# Create mock custom_settings.txt
+RUN touch /jffs/addons/custom_settings.txt
+
 # Make scripts executable
 RUN chmod +x /jffs/sbin/*.sh /jffs/tools/*.sh 2>/dev/null || true
+RUN chmod +x /jffs/addons/acme-wrapper/*.sh /jffs/addons/acme-wrapper/tools/*.sh 2>/dev/null || true
 
 # Create test domains file
 RUN echo "*.test.example.com|test.example.com" > /jffs/.le/domains

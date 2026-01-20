@@ -34,12 +34,46 @@
 #
 # Configuration
 #
-readonly SCRIPT_VERSION="1.0.4"
+readonly SCRIPT_VERSION="2.0.0"
 readonly REAL_ACME_SH="/opt/home/acme.sh/acme.sh"
-readonly DOMAINS_FILE="${ASUS_WRAPPER_ACME_DOMAINS:-/jffs/.le/domains}"
-readonly DNS_API="${ASUS_WRAPPER_DNS_API:-dns_aws}"
 readonly KEY_SUFFIX="_ecc"
 readonly LOG_TAG="acme"
+
+# Addon config file location
+readonly ADDON_CONF="/jffs/addons/acme-wrapper/acme-wrapper.conf"
+
+#
+# Load configuration from addon config file or environment variables
+#
+load_config() {
+    # Default values
+    DOMAINS_FILE="/jffs/.le/domains"
+    DNS_API="dns_aws"
+    DNS_SLEEP="120"
+
+    # Try to load from addon config file
+    if [ -f "$ADDON_CONF" ]; then
+        # shellcheck source=/dev/null
+        . "$ADDON_CONF"
+
+        # Map addon config variables to wrapper variables
+        DOMAINS_FILE="${ACME_WRAPPER_DOMAINS_FILE:-$DOMAINS_FILE}"
+        DNS_API="${ACME_WRAPPER_DNS_API:-$DNS_API}"
+        DNS_SLEEP="${ACME_WRAPPER_DNSSLEEP:-$DNS_SLEEP}"
+
+        # Enable debug if set in config
+        if [ "${ACME_WRAPPER_DEBUG:-0}" = "1" ]; then
+            export ASUS_WRAPPER_DEBUG=1
+        fi
+    fi
+
+    # Environment variables override config file
+    DOMAINS_FILE="${ASUS_WRAPPER_ACME_DOMAINS:-$DOMAINS_FILE}"
+    DNS_API="${ASUS_WRAPPER_DNS_API:-$DNS_API}"
+}
+
+# Load configuration
+load_config
 
 #
 # Logging functions
@@ -294,8 +328,9 @@ process_domain_entry() {
     acme_cmd="$acme_cmd --fullchain-file $fullchain_file"
     acme_cmd="$acme_cmd --key-file $key_file"
 
-    # Add dnssleep (use provided value or default to 120 for reliable DNS propagation)
-    local dns_sleep="${ASUS_DNSSLEEP:-120}"
+    # Add dnssleep (use command-line value, then config value, then default)
+    local dns_sleep="${ASUS_DNSSLEEP:-$DNS_SLEEP}"
+    dns_sleep="${dns_sleep:-120}"
     acme_cmd="$acme_cmd --dnssleep $dns_sleep"
 
     # Add command (--issue, --renew, etc.)

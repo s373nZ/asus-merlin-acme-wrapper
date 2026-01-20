@@ -26,10 +26,26 @@ This wrapper intercepts the firmware's acme.sh calls to add DNS validation suppo
 
 - Asus router running [Merlin firmware](https://www.asuswrt-merlin.net/)
 - [Entware](https://github.com/Entware/Entware/wiki) installed
-- acme.sh installed via Entware: `opkg install acme`
 - DNS provider API credentials (e.g., AWS Route53, Cloudflare)
 
-### Installation
+### Installation (Recommended: amtm Addon)
+
+Install as an amtm addon with Web UI:
+
+```bash
+# Download and run the installer
+curl -fsSL https://raw.githubusercontent.com/s373nZ/asus-merlin-acme-wrapper/main/addon/acme-wrapper.sh | sh -s -- install
+```
+
+This provides:
+- Web UI in the router admin panel (Administration > Tools > ACME Wrapper)
+- Interactive menu via SSH (`/jffs/addons/acme-wrapper/acme-wrapper.sh menu`)
+- Automatic acme.sh installation if missing
+- Clean uninstall support
+
+### Installation (Manual)
+
+For manual installation without the addon:
 
 ```bash
 # Download the wrapper script
@@ -134,6 +150,25 @@ Real acme.sh (/opt/home/acme.sh/acme.sh)
         | (DNS validation)
         v
 Let's Encrypt CA
+```
+
+### Addon Structure
+
+When installed as an amtm addon:
+
+```
+/jffs/addons/acme-wrapper/
+├── acme-wrapper.sh        # Main addon script (menu, install, update)
+├── asus-wrapper-acme.sh   # The wrapper script
+├── acme-wrapper.conf      # Configuration file
+├── acme-wrapper.asp       # Web UI page
+├── acme-wrapper.js        # Web UI JavaScript
+└── tools/                 # Diagnostic utilities
+
+/jffs/.le/
+├── domains                # Domain configuration
+├── account.conf           # DNS provider credentials
+└── *_ecc/                 # Certificate directories
 ```
 
 ## Requirements
