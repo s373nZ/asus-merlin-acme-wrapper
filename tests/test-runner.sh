@@ -250,6 +250,143 @@ fi
 mv /jffs/.le/domains.bak /jffs/.le/domains
 
 ################################################################################
+# Test 9: Addon structure
+################################################################################
+echo_info "Test 9: Addon structure"
+
+if [ -d /jffs/addons/acme-wrapper ]; then
+    echo_pass "Addon directory exists"
+else
+    echo_fail "Addon directory not found"
+fi
+
+if [ -f /jffs/addons/acme-wrapper/acme-wrapper.sh ]; then
+    echo_pass "Main addon script exists"
+else
+    echo_fail "Main addon script not found"
+fi
+
+if [ -x /jffs/addons/acme-wrapper/acme-wrapper.sh ]; then
+    echo_pass "Main addon script is executable"
+else
+    echo_fail "Main addon script is not executable"
+fi
+
+if [ -f /jffs/addons/acme-wrapper/asus-wrapper-acme.sh ]; then
+    echo_pass "Wrapper script exists in addon directory"
+else
+    echo_fail "Wrapper script not found in addon directory"
+fi
+
+################################################################################
+# Test 10: Addon config file support
+################################################################################
+echo_info "Test 10: Addon config file support"
+
+# Create addon config file
+cat > /jffs/addons/acme-wrapper/acme-wrapper.conf << 'CONFEOF'
+ACME_WRAPPER_VERSION="2.0.0"
+ACME_WRAPPER_DNS_API="dns_gd"
+ACME_WRAPPER_DEBUG="1"
+ACME_WRAPPER_DNSSLEEP="180"
+ACME_WRAPPER_DOMAINS_FILE="/jffs/.le/domains"
+ACME_WRAPPER_ACCOUNT_CONF="/jffs/.le/account.conf"
+CONFEOF
+
+rm -f /tmp/acme-calls.log
+unset ASUS_WRAPPER_DNS_API
+
+echo "config-test.example.com" > /jffs/.le/domains
+
+/jffs/addons/acme-wrapper/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain config-test.example.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+if [ -f /tmp/acme-calls.log ]; then
+    if grep -q "dns_gd" /tmp/acme-calls.log; then
+        echo_pass "Config file DNS API (dns_gd) was used"
+    else
+        echo_fail "Config file DNS API was not used"
+        cat /tmp/acme-calls.log
+    fi
+
+    if grep -q -- "--dnssleep 180" /tmp/acme-calls.log; then
+        echo_pass "Config file dnssleep (180) was used"
+    else
+        echo_fail "Config file dnssleep was not used"
+    fi
+else
+    echo_fail "acme.sh was not called for config test"
+fi
+
+# Clean up config for next test
+rm -f /jffs/addons/acme-wrapper/acme-wrapper.conf
+
+################################################################################
+# Test 11: Environment variables override config file
+################################################################################
+echo_info "Test 11: Environment variables override config"
+
+# Create config with one value
+cat > /jffs/addons/acme-wrapper/acme-wrapper.conf << 'CONFEOF'
+ACME_WRAPPER_DNS_API="dns_gd"
+CONFEOF
+
+# Set env var with different value
+export ASUS_WRAPPER_DNS_API=dns_vultr
+rm -f /tmp/acme-calls.log
+
+echo "override-test.example.com" > /jffs/.le/domains
+
+/jffs/addons/acme-wrapper/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain override-test.example.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+if [ -f /tmp/acme-calls.log ]; then
+    if grep -q "dns_vultr" /tmp/acme-calls.log; then
+        echo_pass "Environment variable overrides config file"
+    else
+        echo_fail "Environment variable did not override config file"
+        cat /tmp/acme-calls.log
+    fi
+else
+    echo_fail "acme.sh was not called for override test"
+fi
+
+unset ASUS_WRAPPER_DNS_API
+rm -f /jffs/addons/acme-wrapper/acme-wrapper.conf
+
+################################################################################
+# Test 12: Web UI files exist
+################################################################################
+echo_info "Test 12: Web UI files"
+
+if [ -f /jffs/addons/acme-wrapper/acme-wrapper.asp ]; then
+    echo_pass "Web UI ASP file exists"
+else
+    echo_fail "Web UI ASP file not found"
+fi
+
+if [ -f /jffs/addons/acme-wrapper/acme-wrapper.js ]; then
+    echo_pass "Web UI JavaScript file exists"
+else
+    echo_fail "Web UI JavaScript file not found"
+fi
+
+# Check ASP file contains expected content
+if grep -q "ACME Wrapper" /jffs/addons/acme-wrapper/acme-wrapper.asp 2>/dev/null; then
+    echo_pass "Web UI ASP file contains expected content"
+else
+    echo_fail "Web UI ASP file missing expected content"
+fi
+
+################################################################################
 # Summary
 ################################################################################
 echo ""
