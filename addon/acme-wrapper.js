@@ -8,7 +8,7 @@
  * - Actions trigger service-event scripts
  */
 
-/* global $, custom_settings, showLoading, refreshpage, showhide */
+/* global custom_settings, showLoading, refreshpage, showhide */
 
 var ADDON_NAME = 'acme-wrapper';
 var SETTINGS_PREFIX = 'acme-wrapper_';
