@@ -929,8 +929,39 @@ WebUI_Apply() {
 
     # Update domains file if provided
     if [ -n "$domains" ]; then
-        # Decode domains (| separated, newlines encoded as \n)
-        echo "$domains" | sed 's/\\n/\n/g' > "$DOMAINS_FILE"
+        # Decode domains (newlines encoded as \n)
+        printf '%s\n' "$domains" | sed 's/\\n/\n/g' > "$DOMAINS_FILE"
+        Print_Output info "Updated domains file"
+    fi
+
+    # Update credentials in account.conf if any were provided
+    # Credentials are stored as cred_KEY_NAME in custom_settings
+    if [ -f "$CUSTOM_SETTINGS" ] && grep -q "^${SCRIPT_NAME}_cred_" "$CUSTOM_SETTINGS" 2>/dev/null; then
+        mkdir -p "$(dirname "$ACCOUNT_CONF")"
+
+        # Process each credential setting
+        local cred_lines
+        cred_lines=$(grep "^${SCRIPT_NAME}_cred_" "$CUSTOM_SETTINGS" 2>/dev/null)
+        echo "$cred_lines" | while IFS=' ' read -r key value; do
+            # Extract the actual credential key (remove prefix)
+            local cred_key
+            cred_key=$(echo "$key" | sed "s/^${SCRIPT_NAME}_cred_//")
+            if [ -n "$cred_key" ] && [ -n "$value" ]; then
+                # Update or add to account.conf
+                if grep -q "^${cred_key}=" "$ACCOUNT_CONF" 2>/dev/null; then
+                    # Update existing
+                    sed -i "s|^${cred_key}=.*|${cred_key}='${value}'|" "$ACCOUNT_CONF"
+                else
+                    # Add new
+                    echo "${cred_key}='${value}'" >> "$ACCOUNT_CONF"
+                fi
+            fi
+        done
+
+        Print_Output info "Updated credentials in account.conf"
+
+        # Clean up credential settings from custom_settings (they're now in account.conf)
+        sed -i "/^${SCRIPT_NAME}_cred_/d" "$CUSTOM_SETTINGS"
     fi
 
     Print_Output info "Settings applied"

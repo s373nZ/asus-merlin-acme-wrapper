@@ -1,9 +1,14 @@
 /**
  * ACME Wrapper Web UI JavaScript
- * Handles form interactions and communication with the backend
+ * Handles form interactions and communication with the Merlin backend
+ *
+ * Uses Merlin's Addons API:
+ * - Settings are loaded via <% get_custom_settings(); %> (embedded in page)
+ * - Settings are saved via amng_custom form field
+ * - Actions trigger service-event scripts
  */
 
-/* global $, showhide, showLoading, refreshpage */
+/* global $, custom_settings, showLoading, refreshpage, showhide */
 
 var ADDON_NAME = 'acme-wrapper';
 var SETTINGS_PREFIX = 'acme-wrapper_';
@@ -16,7 +21,7 @@ var DNS_CREDENTIALS = {
     ],
     'dns_cf': [
         { key: 'CF_Token', label: 'API Token', type: 'password', placeholder: 'Your API token' },
-        { key: 'CF_Zone_ID', label: 'Zone ID', type: 'text', placeholder: 'Your zone ID' }
+        { key: 'CF_Zone_ID', label: 'Zone ID (optional)', type: 'text', placeholder: 'Your zone ID' }
     ],
     'dns_gd': [
         { key: 'GD_Key', label: 'API Key', type: 'text', placeholder: '' },
@@ -39,95 +44,71 @@ var DNS_CREDENTIALS = {
 };
 
 /**
+ * Get a setting value from custom_settings
+ * @param {string} key - Setting key (without prefix)
+ * @param {string} defaultValue - Default value if not found
+ * @returns {string} Setting value
+ */
+function getSetting(key, defaultValue) {
+    var fullKey = SETTINGS_PREFIX + key;
+    if (typeof custom_settings !== 'undefined' && custom_settings[fullKey]) {
+        return custom_settings[fullKey];
+    }
+    return defaultValue || '';
+}
+
+/**
  * Initialize the page
  */
 function initial() {
     show_menu();
     loadSettings();
-    refreshStatus();
-    loadCertificates();
+    updateStatusDisplay();
+    showCertificateInfo();
 }
 
 /**
- * Load settings from custom_settings.txt via AJAX
+ * Load settings from the embedded custom_settings object
  */
 function loadSettings() {
-    $.ajax({
-        url: '/ext/acme-wrapper/settings.json',
-        dataType: 'json',
-        timeout: 5000,
-        success: function(data) {
-            if (data) {
-                applyLoadedSettings(data);
-            }
-        },
-        error: function() {
-            // Fall back to reading from custom_settings.txt via shell
-            loadSettingsFromCustomSettings();
-        }
-    });
-}
-
-/**
- * Load settings from custom_settings.txt
- */
-function loadSettingsFromCustomSettings() {
-    $.ajax({
-        url: '/ext/acme-wrapper/get_settings.cgi',
-        dataType: 'json',
-        timeout: 5000,
-        success: function(data) {
-            if (data) {
-                applyLoadedSettings(data);
-            }
-        },
-        error: function() {
-            // Use defaults
-            console.log('Could not load settings, using defaults');
-        }
-    });
-}
-
-/**
- * Apply loaded settings to form fields
- */
-function applyLoadedSettings(data) {
     // DNS API
-    if (data.dns_api) {
-        var select = document.getElementById('dns_api');
-        var found = false;
-        for (var i = 0; i < select.options.length; i++) {
-            if (select.options[i].value === data.dns_api) {
-                select.selectedIndex = i;
-                found = true;
-                break;
-            }
+    var dnsApi = getSetting('dns_api', 'dns_aws');
+    var select = document.getElementById('dns_api');
+    var found = false;
+
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === dnsApi) {
+            select.selectedIndex = i;
+            found = true;
+            break;
         }
-        if (!found) {
-            select.value = 'other';
-            document.getElementById('dns_api_custom').value = data.dns_api;
-            document.getElementById('dns_api_custom').style.display = 'inline-block';
-        }
+    }
+
+    if (!found && dnsApi) {
+        select.value = 'other';
+        document.getElementById('dns_api_custom').value = dnsApi;
+        document.getElementById('dns_api_custom').style.display = 'inline-block';
     }
 
     // DNS Sleep
-    if (data.dnssleep) {
-        document.getElementById('dnssleep').value = data.dnssleep;
-    }
+    var dnsSleep = getSetting('dnssleep', '120');
+    document.getElementById('dnssleep').value = dnsSleep;
 
     // Debug mode
-    if (data.debug === '1') {
+    var debug = getSetting('debug', '0');
+    if (debug === '1') {
         document.getElementById('debug_on').checked = true;
     } else {
         document.getElementById('debug_off').checked = true;
     }
 
-    // Domains
-    if (data.domains) {
-        document.getElementById('domains').value = data.domains.replace(/\\n/g, '\n');
+    // Domains - stored with \n escaped as \\n
+    var domains = getSetting('domains', '');
+    if (domains) {
+        document.getElementById('domains').value = domains.replace(/\\n/g, '\n');
     }
 
-    // Update credential fields
+    // Update credential fields based on selected provider
     onDnsApiChange();
 }
 
@@ -159,114 +140,62 @@ function onDnsApiChange() {
             var row = document.createElement('tr');
             row.innerHTML = '<th width="30%">' + cred.label + '</th>' +
                 '<td><input type="' + cred.type + '" id="cred_' + cred.key + '" ' +
-                'class="input_32_table" placeholder="' + (cred.placeholder || '') + '"></td>';
+                'class="input_32_table" placeholder="' + (cred.placeholder || '') + '">' +
+                '<span style="color:#888; margin-left:10px; font-size:11px;">' + cred.key + '</span></td>';
             credTable.appendChild(row);
         });
+
+        // Add note about credentials
+        var noteRow = document.createElement('tr');
+        noteRow.innerHTML = '<td colspan="2" style="color:#AAAAAA; font-size:12px; padding-top:10px;">' +
+            'Note: Credentials entered here will be saved to /jffs/.le/account.conf' +
+            '</td>';
+        credTable.appendChild(noteRow);
     } else if (dnsApi && dnsApi !== 'other') {
         var row = document.createElement('tr');
         row.innerHTML = '<td colspan="2" style="color:#AAAAAA;">' +
-            'Configure credentials manually in /jffs/.le/account.conf' +
+            'Configure credentials manually in /jffs/.le/account.conf<br>' +
+            'See: <a href="https://github.com/acmesh-official/acme.sh/wiki/dnsapi" target="_blank" style="color:#5FA0CC;">acme.sh DNS API documentation</a>' +
             '</td>';
         credTable.appendChild(row);
     }
 }
 
 /**
- * Refresh status information
+ * Update status display
+ * Note: Without AJAX endpoints, we show static info embedded at install time
  */
-function refreshStatus() {
-    // Get addon status via AJAX
-    $.ajax({
-        url: '/ext/acme-wrapper/status.json',
-        dataType: 'json',
-        timeout: 5000,
-        success: function(data) {
-            updateStatusDisplay(data);
-        },
-        error: function() {
-            // Show basic status
-            document.getElementById('status-version').textContent = '-';
-            document.getElementById('status-mount').innerHTML = '<span class="status-warn">Unknown</span>';
-            document.getElementById('status-acme').textContent = '-';
-        }
-    });
+function updateStatusDisplay() {
+    var version = getSetting('version', '');
+    var installed = getSetting('installed', '');
+
+    document.getElementById('status-version').textContent = version || '2.0.0';
+
+    // Mount status - we can't check dynamically without AJAX, show instructions
+    document.getElementById('status-mount').innerHTML =
+        '<span class="status-ok">See SSH</span> ' +
+        '<span style="color:#888; font-size:11px;">(Run: mount | grep acme.sh)</span>';
+
+    document.getElementById('status-acme').innerHTML =
+        '<span style="color:#888; font-size:11px;">Check via SSH: /opt/home/acme.sh/acme.sh --version</span>';
 }
 
 /**
- * Update status display with data
+ * Show certificate information
+ * Note: Without AJAX endpoints, we provide instructions for checking via SSH
  */
-function updateStatusDisplay(data) {
-    if (data.version) {
-        document.getElementById('status-version').textContent = data.version;
-    }
-
-    if (data.mounted) {
-        document.getElementById('status-mount').innerHTML =
-            '<span class="status-ok">Mounted</span>';
-    } else {
-        document.getElementById('status-mount').innerHTML =
-            '<span class="status-error">Not Mounted</span>';
-    }
-
-    if (data.acme_version) {
-        document.getElementById('status-acme').textContent = data.acme_version;
-    }
-}
-
-/**
- * Load certificate information
- */
-function loadCertificates() {
-    $.ajax({
-        url: '/ext/acme-wrapper/certificates.json',
-        dataType: 'json',
-        timeout: 5000,
-        success: function(data) {
-            displayCertificates(data);
-        },
-        error: function() {
-            document.getElementById('cert-table-body').innerHTML =
-                '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">Unable to load certificate information</td></tr>';
-        }
-    });
-}
-
-/**
- * Display certificate information in table
- */
-function displayCertificates(certs) {
+function showCertificateInfo() {
     var tbody = document.getElementById('cert-table-body');
-
-    if (!certs || certs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">No certificates found</td></tr>';
-        return;
-    }
-
-    var html = '';
-    certs.forEach(function(cert) {
-        var statusClass = 'status-ok';
-        var statusText = 'Valid';
-
-        if (cert.expired) {
-            statusClass = 'status-error';
-            statusText = 'Expired';
-        } else if (cert.expiring_soon) {
-            statusClass = 'status-warn';
-            statusText = 'Expiring Soon';
-        }
-
-        html += '<tr>';
-        html += '<td>' + escapeHtml(cert.domain) + '</td>';
-        html += '<td>' + escapeHtml(cert.expires) + '</td>';
-        html += '<td><span class="' + statusClass + '">' + statusText + '</span></td>';
-        html += '</tr>';
-    });
-
-    tbody.innerHTML = html;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">' +
+        'To view certificates, run on router via SSH:<br>' +
+        '<code style="background:#1a1a1a; padding:2px 6px; border-radius:3px;">ls -la /jffs/.le/*_ecc/</code><br><br>' +
+        'Or check expiration:<br>' +
+        '<code style="background:#1a1a1a; padding:2px 6px; border-radius:3px;">openssl x509 -in /jffs/.le/DOMAIN_ecc/fullchain.pem -noout -dates</code>' +
+        '</td></tr>';
 }
 
 /**
- * Apply settings
+ * Apply settings - saves to custom_settings.txt and triggers service event
  */
 function applySettings() {
     // Gather form data
@@ -290,109 +219,95 @@ function applySettings() {
         return;
     }
 
-    // Build settings object
-    var settings = {
-        dns_api: dnsApi,
-        dnssleep: dnsSleep,
-        debug: debug,
-        domains: domains.replace(/\n/g, '\\n')
-    };
+    // Build settings array for amng_custom
+    var settingsArray = [];
+    settingsArray.push(SETTINGS_PREFIX + 'dns_api ' + dnsApi);
+    settingsArray.push(SETTINGS_PREFIX + 'dnssleep ' + dnsSleep);
+    settingsArray.push(SETTINGS_PREFIX + 'debug ' + debug);
 
-    // Gather credentials if present
+    // Escape newlines in domains
+    if (domains) {
+        settingsArray.push(SETTINGS_PREFIX + 'domains ' + domains.replace(/\n/g, '\\n'));
+    }
+
+    // Gather credentials if entered
     var credentials = DNS_CREDENTIALS[dnsApi] || [];
     credentials.forEach(function(cred) {
         var input = document.getElementById('cred_' + cred.key);
         if (input && input.value) {
-            settings['cred_' + cred.key] = input.value;
+            settingsArray.push(SETTINGS_PREFIX + 'cred_' + cred.key + ' ' + input.value);
         }
     });
 
-    // Save settings via custom_settings
-    saveSettings(settings);
-}
-
-/**
- * Save settings to custom_settings.txt and trigger service event
- */
-function saveSettings(settings) {
-    // Build amng_custom string for the form
-    var customSettings = [];
-    for (var key in settings) {
-        if (settings.hasOwnProperty(key)) {
-            customSettings.push(SETTINGS_PREFIX + key + ' ' + settings[key]);
-        }
-    }
-
-    document.getElementById('amng_custom').value = customSettings.join('\n');
+    // Set form values
+    document.getElementById('amng_custom').value = settingsArray.join('\n');
     document.form.action_script.value = 'start_acmewrapper';
     document.form.action_wait.value = '5';
 
     // Show loading
-    showLoading();
+    if (typeof showLoading === 'function') {
+        showLoading();
+    }
 
     // Submit form
     document.form.submit();
 
     // Refresh after delay
     setTimeout(function() {
-        refreshpage();
+        if (typeof refreshpage === 'function') {
+            refreshpage();
+        } else {
+            location.reload();
+        }
     }, 6000);
 }
 
 /**
- * Issue/Renew certificates
+ * Issue/Renew certificates - triggers Let's Encrypt service restart
  */
 function issueCertificates() {
-    if (!confirm('This will issue or renew certificates for all configured domains. Continue?')) {
+    if (!confirm('This will issue or renew certificates for all configured domains.\n\nMake sure you have:\n1. Configured your domains\n2. Set up DNS API credentials in /jffs/.le/account.conf\n\nContinue?')) {
         return;
     }
 
-    showLoading();
+    // Use Merlin's built-in Let's Encrypt service restart
+    document.form.action_script.value = 'restart_letsencrypt';
+    document.form.action_wait.value = '120';
 
-    $.ajax({
-        url: '/ext/acme-wrapper/issue.cgi',
-        type: 'POST',
-        timeout: 300000, // 5 minute timeout for cert issuance
-        success: function(data) {
-            alert('Certificate issuance triggered. Check logs for progress.');
-            refreshStatus();
-            loadCertificates();
-        },
-        error: function() {
-            // Fall back to service command
-            document.form.action_script.value = 'restart_letsencrypt';
-            document.form.action_wait.value = '60';
-            document.form.submit();
+    if (typeof showLoading === 'function') {
+        showLoading();
+    }
 
-            setTimeout(function() {
-                alert('Certificate issuance triggered. Check router logs for progress.');
-                refreshpage();
-            }, 5000);
+    document.form.submit();
+
+    setTimeout(function() {
+        alert('Certificate issuance triggered.\n\nCheck progress via SSH:\ntail -f /tmp/syslog.log | grep -i acme');
+        if (typeof refreshpage === 'function') {
+            refreshpage();
+        } else {
+            location.reload();
         }
-    });
+    }, 5000);
 }
 
 /**
- * View logs
+ * View logs - shows instructions since we can't fetch logs via AJAX
  */
 function viewLogs() {
     var modal = document.getElementById('log-modal');
     var content = document.getElementById('log-content');
 
     modal.style.display = 'block';
-    content.textContent = 'Loading...';
-
-    $.ajax({
-        url: '/ext/acme-wrapper/logs.txt',
-        dataType: 'text',
-        timeout: 10000,
-        success: function(data) {
-            content.textContent = data || 'No log entries found.';
-        },
-        error: function() {
-            content.textContent = 'Unable to load logs. Check /tmp/acme-wrapper.log on the router.';
-        }
-    });
+    content.innerHTML =
+        '<strong>To view ACME Wrapper logs, run on router via SSH:</strong>\n\n' +
+        '# View wrapper log:\n' +
+        'cat /tmp/acme-wrapper.log\n\n' +
+        '# View system log (acme related):\n' +
+        'grep -i acme /tmp/syslog.log | tail -50\n\n' +
+        '# Watch live logs during certificate issuance:\n' +
+        'tail -f /tmp/syslog.log | grep -i acme\n\n' +
+        '# Check acme.sh log:\n' +
+        'cat /tmp/acme.log 2>/dev/null || echo "No acme.sh log found"';
 }
 
 /**
@@ -403,21 +318,10 @@ function closeLogModal() {
 }
 
 /**
- * Escape HTML for safe display
+ * Refresh status - reloads the page
  */
-function escapeHtml(text) {
-    var div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/**
- * Show loading indicator
- */
-function showLoading() {
-    if (typeof showhide === 'function') {
-        showhide('Loading', 1);
-    }
+function refreshStatus() {
+    location.reload();
 }
 
 /**
@@ -426,5 +330,14 @@ function showLoading() {
 function show_menu() {
     if (typeof showmenu === 'function') {
         showmenu();
+    }
+}
+
+/**
+ * Show loading indicator
+ */
+function showLoading() {
+    if (typeof showhide === 'function') {
+        showhide('Loading', 1);
     }
 }

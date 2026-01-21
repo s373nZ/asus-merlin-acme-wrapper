@@ -14,6 +14,10 @@
 <script src="/validator.js"></script>
 <script src="/js/jquery.js"></script>
 <script src="/user/acme-wrapper.js"></script>
+<script>
+// Load custom settings from Merlin's addon API
+var custom_settings = <% get_custom_settings(); %>;
+</script>
 <style>
 .acme-section {
     margin-bottom: 20px;
