@@ -57,6 +57,36 @@ function getSetting(key, defaultValue) {
     return defaultValue || '';
 }
 
+// Debug: Monitor for unexpected refreshes
+(function() {
+    // Monitor form submissions
+    var origSubmit = HTMLFormElement.prototype.submit;
+    HTMLFormElement.prototype.submit = function() {
+        console.log('DEBUG: Form submit called!', this.name, this.action);
+        console.trace();
+        return origSubmit.apply(this, arguments);
+    };
+
+    // Monitor location changes
+    var origReload = location.reload;
+    location.reload = function() {
+        console.log('DEBUG: location.reload called!');
+        console.trace();
+        return origReload.apply(this, arguments);
+    };
+
+    // Monitor setTimeout for refreshpage calls
+    var origSetTimeout = window.setTimeout;
+    window.setTimeout = function(fn, delay) {
+        var fnStr = fn.toString().substring(0, 100);
+        if (fnStr.indexOf('refresh') !== -1 || fnStr.indexOf('reload') !== -1 || fnStr.indexOf('location') !== -1) {
+            console.log('DEBUG: setTimeout with refresh-like function:', fnStr, 'delay:', delay);
+            console.trace();
+        }
+        return origSetTimeout.apply(this, arguments);
+    };
+})();
+
 /**
  * Set current page path in form fields
  * Required for Merlin to know which page we're on and prevent redirect loops
