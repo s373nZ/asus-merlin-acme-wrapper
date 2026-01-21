@@ -74,6 +74,17 @@ esac
 MOCKEOF
 RUN chmod +x /opt/home/acme.sh/acme.sh
 
+# Create mock nvram command for DDNS hostname testing
+RUN cat > /usr/bin/nvram <<'NVRAMEOF'
+#!/bin/sh
+# Mock nvram for testing DDNS hostname symlink creation
+case "$1 $2" in
+    "get ddns_hostname_x") echo "test-ddns.asuscomm.com" ;;
+    *) echo "" ;;
+esac
+NVRAMEOF
+RUN chmod +x /usr/bin/nvram
+
 # Copy wrapper script and tools (legacy locations)
 COPY scripts/asus-wrapper-acme.sh /jffs/sbin/
 COPY tools/*.sh /jffs/tools/

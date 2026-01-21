@@ -106,6 +106,17 @@ die() {
 }
 
 #
+# NVRAM helper functions
+#
+
+# Get DDNS hostname from NVRAM (returns empty if not set or nvram unavailable)
+get_ddns_hostname() {
+    if command -v nvram >/dev/null 2>&1; then
+        nvram get ddns_hostname_x 2>/dev/null | tr -d '\n'
+    fi
+}
+
+#
 # Validation functions
 #
 validate_prerequisites() {
@@ -373,6 +384,31 @@ process_domain_entry() {
             tail -10 "$output_file" | while IFS= read -r line; do
                 log_debug "  $line"
             done
+        fi
+
+        # Create DDNS symlink if hostname differs from cert domain
+        # This allows Merlin firmware to find the certificate at the expected path
+        local ddns_hostname
+        ddns_hostname=$(get_ddns_hostname)
+        if [ -n "$ddns_hostname" ] && [ "$ddns_hostname" != "$base_domain" ]; then
+            local ddns_cert_dir="${ASUS_CERT_HOME}/${ddns_hostname}${KEY_SUFFIX}"
+            if [ -L "$ddns_cert_dir" ]; then
+                # Symlink already exists, update it if target changed
+                local current_target
+                current_target=$(readlink "$ddns_cert_dir")
+                if [ "$current_target" != "$cert_dir" ]; then
+                    rm -f "$ddns_cert_dir"
+                    ln -sf "$cert_dir" "$ddns_cert_dir"
+                    log_info "Updated symlink: $ddns_cert_dir -> $cert_dir"
+                else
+                    log_debug "Symlink already correct: $ddns_cert_dir -> $cert_dir"
+                fi
+            elif [ ! -e "$ddns_cert_dir" ]; then
+                ln -sf "$cert_dir" "$ddns_cert_dir"
+                log_info "Created symlink: $ddns_cert_dir -> $cert_dir"
+            else
+                log_error "Cannot create DDNS symlink: $ddns_cert_dir already exists and is not a symlink"
+            fi
         fi
 
         rm -f "$output_file"
