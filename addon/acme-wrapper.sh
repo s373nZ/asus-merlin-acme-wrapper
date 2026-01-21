@@ -83,12 +83,25 @@ Print_Header() {
     printf '%b============================================%b\n\n' "$COL_CYAN" "$COL_RESET"
 }
 
+# Read user input, handling piped scripts (curl | sh) by reading from /dev/tty
+Read_Input() {
+    local input=""
+    if [ -t 0 ]; then
+        # stdin is a terminal, read normally
+        read -r input
+    elif [ -e /dev/tty ]; then
+        # stdin is piped but tty exists, read from tty
+        read -r input < /dev/tty
+    fi
+    echo "$input"
+}
+
 Confirm_Action() {
     local prompt="$1"
     local response
 
     printf '%s [y/N]: ' "$prompt"
-    read -r response
+    response=$(Read_Input)
 
     case "$response" in
         [yY]|[yY][eE][sS]) return 0 ;;
@@ -954,7 +967,7 @@ Show_Menu() {
     printf 'Choose an option: '
 
     local choice
-    read -r choice
+    choice=$(Read_Input)
 
     case "$choice" in
         1) Menu_Install ;;
@@ -974,7 +987,7 @@ Show_Menu() {
 
     # Return to menu after action
     printf '\nPress Enter to continue...'
-    read -r _
+    Read_Input > /dev/null
     Show_Menu
 }
 
@@ -993,7 +1006,7 @@ Configure_DNS_API() {
     printf 'Choose an option: '
 
     local choice
-    read -r choice
+    choice=$(Read_Input)
 
     local dns_api=""
     case "$choice" in
@@ -1006,7 +1019,7 @@ Configure_DNS_API() {
         7) dns_api="dns_vultr" ;;
         8)
             printf 'Enter DNS API name (e.g., dns_xxx): '
-            read -r dns_api
+            dns_api=$(Read_Input)
             ;;
         *)
             Print_Output warn "Invalid option"
