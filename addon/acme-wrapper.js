@@ -67,23 +67,59 @@ function getSetting(key, defaultValue) {
         return origSubmit.apply(this, arguments);
     };
 
-    // Monitor location changes
-    var origReload = location.reload;
+    // Monitor location.href assignment
+    var origLocation = window.location.href;
+    try {
+        Object.defineProperty(window, 'location', {
+            get: function() { return origLocation; },
+            set: function(val) {
+                console.log('DEBUG: window.location assigned:', val);
+                console.trace();
+                origLocation = val;
+            }
+        });
+    } catch(e) {
+        console.log('DEBUG: Could not override location');
+    }
+
+    // Monitor location.reload
+    var origReload = location.reload.bind(location);
     location.reload = function() {
         console.log('DEBUG: location.reload called!');
         console.trace();
-        return origReload.apply(this, arguments);
+        return origReload();
     };
 
-    // Monitor setTimeout for refreshpage calls
+    // Monitor location.replace
+    var origReplace = location.replace.bind(location);
+    location.replace = function(url) {
+        console.log('DEBUG: location.replace called:', url);
+        console.trace();
+        return origReplace(url);
+    };
+
+    // Monitor history.go
+    var origGo = history.go.bind(history);
+    history.go = function(n) {
+        console.log('DEBUG: history.go called:', n);
+        console.trace();
+        return origGo(n);
+    };
+
+    // Monitor ALL setTimeouts
     var origSetTimeout = window.setTimeout;
     window.setTimeout = function(fn, delay) {
-        var fnStr = fn.toString().substring(0, 100);
-        if (fnStr.indexOf('refresh') !== -1 || fnStr.indexOf('reload') !== -1 || fnStr.indexOf('location') !== -1) {
-            console.log('DEBUG: setTimeout with refresh-like function:', fnStr, 'delay:', delay);
-            console.trace();
-        }
-        return origSetTimeout.apply(this, arguments);
+        var id = origSetTimeout.apply(this, arguments);
+        console.log('DEBUG: setTimeout registered, id=' + id + ', delay=' + delay + 'ms');
+        return id;
+    };
+
+    // Monitor setInterval
+    var origSetInterval = window.setInterval;
+    window.setInterval = function(fn, delay) {
+        var id = origSetInterval.apply(this, arguments);
+        console.log('DEBUG: setInterval registered, id=' + id + ', delay=' + delay + 'ms');
+        return id;
     };
 })();
 
