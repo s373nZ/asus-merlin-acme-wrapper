@@ -14,6 +14,11 @@
 // Prevent UI4 wrapper redirect for addon pages
 // CoBrand="99" makes noWrapper=true in state.js
 var CoBrand = "99";
+
+// Prevent notification.js loading which can cause refresh issues on addon pages
+var notice_pw_is_default = false;
+var is498support = false;
+var notice_acme_reregister = "";
 </script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
