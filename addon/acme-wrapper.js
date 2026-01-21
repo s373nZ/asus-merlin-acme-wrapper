@@ -62,9 +62,11 @@ function getSetting(key, defaultValue) {
  * Required for Merlin to know which page we're on and prevent redirect loops
  */
 function SetCurrentPage() {
+    console.log('DEBUG: SetCurrentPage start');
     var path = window.location.pathname.substring(1);
     document.form.current_page.value = path;
     document.form.next_page.value = path;
+    console.log('DEBUG: SetCurrentPage done, path=' + path);
 }
 
 /**
@@ -72,12 +74,17 @@ function SetCurrentPage() {
  * Called by body onload - must call Merlin's show_menu() for navigation
  */
 function initial() {
+    console.log('DEBUG: initial() start');
     SetCurrentPage();
-    // show_menu() is defined in state.js and renders banner, navigation, footer
+    console.log('DEBUG: calling show_menu()');
     show_menu();
+    console.log('DEBUG: show_menu() done, calling loadSettings()');
     loadSettings();
+    console.log('DEBUG: loadSettings() done, calling updateStatusDisplay()');
     updateStatusDisplay();
+    console.log('DEBUG: updateStatusDisplay() done, calling showCertificateInfo()');
     showCertificateInfo();
+    console.log('DEBUG: initial() complete');
 }
 
 /**
