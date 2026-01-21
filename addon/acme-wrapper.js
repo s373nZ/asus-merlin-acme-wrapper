@@ -142,9 +142,12 @@ function SetCurrentPage() {
 function initial() {
     console.log('DEBUG: initial() start');
     SetCurrentPage();
-    console.log('DEBUG: calling show_menu()');
-    show_menu();
-    console.log('DEBUG: show_menu() done, calling loadSettings()');
+
+    // DEBUG: Skip show_menu() to test if it causes refresh
+    console.log('DEBUG: SKIPPING show_menu() for testing');
+    // show_menu();
+
+    console.log('DEBUG: calling loadSettings()');
     loadSettings();
     console.log('DEBUG: loadSettings() done, calling updateStatusDisplay()');
     updateStatusDisplay();
