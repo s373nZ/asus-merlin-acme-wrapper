@@ -387,6 +387,116 @@ else
 fi
 
 ################################################################################
+# Test 13: DDNS hostname symlink creation
+################################################################################
+echo_info "Test 13: DDNS hostname symlink creation"
+
+# Clean up any previous test artifacts
+rm -rf /jffs/.le/ddns-test.example.com_ecc
+rm -rf /jffs/.le/test-ddns.asuscomm.com_ecc
+rm -f /tmp/acme-calls.log
+
+# Set up test domain that differs from DDNS hostname
+echo "ddns-test.example.com" > /jffs/.le/domains
+
+# Run wrapper - should create cert dir AND symlink
+/jffs/sbin/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain ddns-test.example.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+# Check if certificate directory was created
+if [ -d /jffs/.le/ddns-test.example.com_ecc ]; then
+    echo_pass "Certificate directory created"
+else
+    echo_fail "Certificate directory not created"
+fi
+
+# Check if DDNS symlink was created
+if [ -L /jffs/.le/test-ddns.asuscomm.com_ecc ]; then
+    echo_pass "DDNS symlink created"
+
+    # Verify symlink points to correct target
+    target=$(readlink /jffs/.le/test-ddns.asuscomm.com_ecc)
+    if [ "$target" = "/jffs/.le/ddns-test.example.com_ecc" ]; then
+        echo_pass "DDNS symlink points to correct target"
+    else
+        echo_fail "DDNS symlink points to wrong target: $target"
+    fi
+else
+    echo_fail "DDNS symlink not created"
+fi
+
+################################################################################
+# Test 14: DDNS symlink not created when hostname matches domain
+################################################################################
+echo_info "Test 14: DDNS symlink skipped when hostname matches domain"
+
+# Clean up
+rm -rf /jffs/.le/test-ddns.asuscomm.com_ecc
+rm -f /tmp/acme-calls.log
+
+# Set up domain that matches DDNS hostname
+echo "test-ddns.asuscomm.com" > /jffs/.le/domains
+
+# Run wrapper
+/jffs/sbin/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain test-ddns.asuscomm.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+# Check certificate directory was created (should be a real directory, not symlink)
+if [ -d /jffs/.le/test-ddns.asuscomm.com_ecc ] && [ ! -L /jffs/.le/test-ddns.asuscomm.com_ecc ]; then
+    echo_pass "Certificate directory created as real directory (not symlink)"
+else
+    echo_fail "Certificate directory not created correctly"
+fi
+
+################################################################################
+# Test 15: DDNS symlink idempotency (running twice updates correctly)
+################################################################################
+echo_info "Test 15: DDNS symlink idempotency"
+
+# Clean up
+rm -rf /jffs/.le/idempotent-test.example.com_ecc
+rm -rf /jffs/.le/test-ddns.asuscomm.com_ecc
+rm -f /tmp/acme-calls.log
+
+# Set up test domain
+echo "idempotent-test.example.com" > /jffs/.le/domains
+
+# Run wrapper twice
+/jffs/sbin/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain idempotent-test.example.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+/jffs/sbin/asus-wrapper-acme.sh \
+    --home /opt/home/acme.sh \
+    --cert-home /jffs/.le \
+    --domain idempotent-test.example.com \
+    --issue \
+    > /tmp/test-output.log 2>&1
+
+# Check symlink still exists and is correct
+if [ -L /jffs/.le/test-ddns.asuscomm.com_ecc ]; then
+    target=$(readlink /jffs/.le/test-ddns.asuscomm.com_ecc)
+    if [ "$target" = "/jffs/.le/idempotent-test.example.com_ecc" ]; then
+        echo_pass "DDNS symlink remains correct after multiple runs"
+    else
+        echo_fail "DDNS symlink has wrong target after multiple runs: $target"
+    fi
+else
+    echo_fail "DDNS symlink missing after multiple runs"
+fi
+
+################################################################################
 # Summary
 ################################################################################
 echo ""
