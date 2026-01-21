@@ -58,10 +58,21 @@ function getSetting(key, defaultValue) {
 }
 
 /**
+ * Set current page path in form fields
+ * Required for Merlin to know which page we're on and prevent redirect loops
+ */
+function SetCurrentPage() {
+    var path = window.location.pathname.substring(1);
+    document.form.current_page.value = path;
+    document.form.next_page.value = path;
+}
+
+/**
  * Initialize the page
  * Called by body onload - must call Merlin's show_menu() for navigation
  */
 function initial() {
+    SetCurrentPage();
     // show_menu() is defined in state.js and renders banner, navigation, footer
     show_menu();
     loadSettings();
