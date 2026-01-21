@@ -59,8 +59,10 @@ function getSetting(key, defaultValue) {
 
 /**
  * Initialize the page
+ * Called by body onload - must call Merlin's show_menu() for navigation
  */
 function initial() {
+    // show_menu() is defined in state.js and renders banner, navigation, footer
     show_menu();
     loadSettings();
     updateStatusDisplay();
@@ -322,22 +324,4 @@ function closeLogModal() {
  */
 function refreshStatus() {
     location.reload();
-}
-
-/**
- * Show menu - called by page template
- */
-function show_menu() {
-    if (typeof showmenu === 'function') {
-        showmenu();
-    }
-}
-
-/**
- * Show loading indicator
- */
-function showLoading() {
-    if (typeof showhide === 'function') {
-        showhide('Loading', 1);
-    }
 }
