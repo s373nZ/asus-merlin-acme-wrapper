@@ -7,13 +7,13 @@
 <title>ACME Wrapper</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<script src="/state.js"></script>
-<script src="/general.js"></script>
-<script src="/popup.js"></script>
-<script src="/help.js"></script>
-<script src="/validator.js"></script>
-<script src="/js/jquery.js"></script>
-<script src="/user/acme-wrapper.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/state.js"></script>
+<script language="JavaScript" type="text/javascript" src="/general.js"></script>
+<script language="JavaScript" type="text/javascript" src="/popup.js"></script>
+<script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/user/acme-wrapper.js"></script>
 <script>
 // Load custom settings from Merlin's addon API
 var custom_settings = <% get_custom_settings(); %>;
