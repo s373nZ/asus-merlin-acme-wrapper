@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
 <title>ACME Wrapper</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
@@ -15,7 +18,15 @@
 <script type="text/javascript" src="/user/acme-wrapper.js"></script>
 <script>
 // Load custom settings from Merlin's addon API
-var custom_settings = <% get_custom_settings(); %>;
+var custom_settings;
+try {
+    custom_settings = <% get_custom_settings(); %>;
+} catch(e) {
+    custom_settings = {};
+}
+if (typeof custom_settings !== 'object' || custom_settings === null) {
+    custom_settings = {};
+}
 </script>
 <style>
 .acme-section {
