@@ -231,15 +231,14 @@ function applySettings() {
         return;
     }
 
-    // Build settings array for amng_custom
-    var settingsArray = [];
-    settingsArray.push(SETTINGS_PREFIX + 'dns_api ' + dnsApi);
-    settingsArray.push(SETTINGS_PREFIX + 'dnssleep ' + dnsSleep);
-    settingsArray.push(SETTINGS_PREFIX + 'debug ' + debug);
+    // Update custom_settings object with form values
+    custom_settings[SETTINGS_PREFIX + 'dns_api'] = dnsApi;
+    custom_settings[SETTINGS_PREFIX + 'dnssleep'] = dnsSleep;
+    custom_settings[SETTINGS_PREFIX + 'debug'] = debug;
 
     // Escape newlines in domains
     if (domains) {
-        settingsArray.push(SETTINGS_PREFIX + 'domains ' + domains.replace(/\n/g, '\\n'));
+        custom_settings[SETTINGS_PREFIX + 'domains'] = domains.replace(/\n/g, '\\n');
     }
 
     // Gather credentials if entered
@@ -247,12 +246,12 @@ function applySettings() {
     credentials.forEach(function(cred) {
         var input = document.getElementById('cred_' + cred.key);
         if (input && input.value) {
-            settingsArray.push(SETTINGS_PREFIX + 'cred_' + cred.key + ' ' + input.value);
+            custom_settings[SETTINGS_PREFIX + 'cred_' + cred.key] = input.value;
         }
     });
 
-    // Set form values
-    document.getElementById('amng_custom').value = settingsArray.join('\n');
+    // Set form values - Merlin expects JSON format
+    document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
     document.form.action_script.value = 'start_acmewrapper';
     document.form.action_wait.value = '5';
 
