@@ -13,9 +13,11 @@
 
 readonly SCRIPT_NAME="acme-wrapper"
 readonly SCRIPT_VERSION="2.0.0"
-readonly SCRIPT_BRANCH="main"
 readonly SCRIPT_REPO="s373nZ/asus-merlin-acme-wrapper"
-readonly SCRIPT_URL="https://raw.githubusercontent.com/${SCRIPT_REPO}/${SCRIPT_BRANCH}"
+readonly SCRIPT_DEFAULT_BRANCH="main"
+
+# Branch is configurable - set later after settings functions are defined
+SCRIPT_BRANCH=""
 
 # Paths
 readonly ADDON_DIR="/jffs/addons/${SCRIPT_NAME}"
@@ -164,6 +166,56 @@ Set_Setting() {
 Clear_Settings() {
     if [ -f "$CUSTOM_SETTINGS" ]; then
         sed -i "/^${SCRIPT_NAME}_/d" "$CUSTOM_SETTINGS"
+    fi
+}
+
+################################################################################
+# Branch Configuration
+################################################################################
+
+# Get the configured branch (from settings, env var, or default)
+Get_Branch() {
+    # Command-line/env override takes precedence
+    if [ -n "$SCRIPT_BRANCH" ]; then
+        echo "$SCRIPT_BRANCH"
+        return
+    fi
+
+    # Check settings
+    local saved_branch
+    saved_branch=$(Get_Setting "branch" "")
+    if [ -n "$saved_branch" ]; then
+        echo "$saved_branch"
+        return
+    fi
+
+    # Default branch
+    echo "$SCRIPT_DEFAULT_BRANCH"
+}
+
+# Set the branch for this session and save to settings
+Set_Branch() {
+    local branch="$1"
+    SCRIPT_BRANCH="$branch"
+    Set_Setting "branch" "$branch"
+}
+
+# Get the raw GitHub URL for the current branch
+Get_Script_URL() {
+    local branch
+    branch=$(Get_Branch)
+    echo "https://raw.githubusercontent.com/${SCRIPT_REPO}/${branch}"
+}
+
+# Validate that a branch exists on the remote repository
+Validate_Branch() {
+    local branch="$1"
+    local test_url="https://raw.githubusercontent.com/${SCRIPT_REPO}/${branch}/addon/acme-wrapper.sh"
+
+    if curl -fsSL --head "$test_url" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -615,7 +667,12 @@ Download_File() {
 }
 
 Download_Addon_Files() {
-    Print_Output info "Downloading addon files..."
+    local base_url
+    base_url=$(Get_Script_URL)
+    local branch
+    branch=$(Get_Branch)
+
+    Print_Output info "Downloading addon files from branch: $branch"
 
     # Create directories
     mkdir -p "$ADDON_DIR"
@@ -623,22 +680,22 @@ Download_Addon_Files() {
     mkdir -p "$LE_DIR"
 
     # Download wrapper script
-    if ! Download_File "${SCRIPT_URL}/scripts/asus-wrapper-acme.sh" "$WRAPPER_SCRIPT"; then
+    if ! Download_File "${base_url}/scripts/asus-wrapper-acme.sh" "$WRAPPER_SCRIPT"; then
         return 1
     fi
     chmod +x "$WRAPPER_SCRIPT"
 
     # Download Web UI files
-    Download_File "${SCRIPT_URL}/addon/${SCRIPT_NAME}.asp" "$WEBAPP_FILE" || true
-    Download_File "${SCRIPT_URL}/addon/${SCRIPT_NAME}.js" "$WEBAPP_JS" || true
+    Download_File "${base_url}/addon/${SCRIPT_NAME}.asp" "$WEBAPP_FILE" || true
+    Download_File "${base_url}/addon/${SCRIPT_NAME}.js" "$WEBAPP_JS" || true
 
     # Download tools
-    Download_File "${SCRIPT_URL}/tools/validate-acme-wrapper.sh" "$ADDON_DIR/tools/validate-acme-wrapper.sh" || true
-    Download_File "${SCRIPT_URL}/tools/diagnose-acme-issue.sh" "$ADDON_DIR/tools/diagnose-acme-issue.sh" || true
+    Download_File "${base_url}/tools/validate-acme-wrapper.sh" "$ADDON_DIR/tools/validate-acme-wrapper.sh" || true
+    Download_File "${base_url}/tools/diagnose-acme-issue.sh" "$ADDON_DIR/tools/diagnose-acme-issue.sh" || true
     chmod +x "$ADDON_DIR/tools/"*.sh 2>/dev/null || true
 
     # Download this script (self-update)
-    Download_File "${SCRIPT_URL}/addon/acme-wrapper.sh" "$ADDON_DIR/acme-wrapper.sh" || true
+    Download_File "${base_url}/addon/acme-wrapper.sh" "$ADDON_DIR/acme-wrapper.sh" || true
     chmod +x "$ADDON_DIR/acme-wrapper.sh"
 
     Print_Output info "Addon files downloaded"
@@ -651,7 +708,16 @@ Download_Addon_Files() {
 
 Menu_Install() {
     Print_Header
-    Print_Output info "Installing $SCRIPT_NAME..."
+
+    local branch
+    branch=$(Get_Branch)
+    Print_Output info "Installing $SCRIPT_NAME from branch: $branch"
+
+    # Validate branch exists
+    if ! Validate_Branch "$branch"; then
+        Print_Output error "Branch '$branch' not found in repository"
+        return 1
+    fi
 
     # Check lock
     if ! Check_Lock; then
@@ -680,6 +746,9 @@ Menu_Install() {
         Print_Output error "Failed to download addon files"
         return 1
     fi
+
+    # Save branch preference
+    Set_Setting "branch" "$branch"
 
     # Create default config
     ACME_WRAPPER_DNS_API="${ACME_WRAPPER_DNS_API:-dns_aws}"
@@ -781,7 +850,16 @@ Menu_Uninstall() {
 
 Menu_Update() {
     Print_Header
-    Print_Output info "Updating $SCRIPT_NAME..."
+
+    local branch
+    branch=$(Get_Branch)
+    Print_Output info "Updating $SCRIPT_NAME from branch: $branch"
+
+    # Validate branch exists
+    if ! Validate_Branch "$branch"; then
+        Print_Output error "Branch '$branch' not found in repository"
+        return 1
+    fi
 
     if ! Check_Lock; then
         return 1
@@ -805,6 +883,9 @@ Menu_Update() {
     ACME_WRAPPER_DNSSLEEP="$current_dnssleep"
     Save_Config
 
+    # Save branch preference (in case it was changed via SCRIPT_BRANCH)
+    Set_Setting "branch" "$branch"
+
     # Remount wrapper
     Mount_Wrapper
 
@@ -816,7 +897,7 @@ Menu_Update() {
     Set_Setting "version" "$SCRIPT_VERSION"
     Set_Setting "updated" "$(date '+%Y-%m-%d %H:%M:%S')"
 
-    Print_Output info "Update complete: v$SCRIPT_VERSION"
+    Print_Output info "Update complete: v$SCRIPT_VERSION (branch: $branch)"
     return 0
 }
 
@@ -830,9 +911,13 @@ Menu_Status() {
     local installed_version
     installed_version=$(Get_Setting "version" "not installed")
 
+    local current_branch
+    current_branch=$(Get_Branch)
+
     printf '%bInstallation Status:%b\n' "$COL_BOLD" "$COL_RESET"
     printf '  Addon version:    %s\n' "$installed_version"
     printf '  Script version:   %s\n' "$SCRIPT_VERSION"
+    printf '  Update branch:    %s\n' "$current_branch"
     printf '  Addon directory:  %s\n' "$ADDON_DIR"
 
     # Check mount status
@@ -1003,11 +1088,15 @@ Show_Menu() {
     local installed_version
     installed_version=$(Get_Setting "version" "")
 
+    local current_branch
+    current_branch=$(Get_Branch)
+
     if [ -z "$installed_version" ]; then
-        printf '%bStatus:%b Not installed\n\n' "$COL_BOLD" "$COL_RESET"
+        printf '%bStatus:%b Not installed\n' "$COL_BOLD" "$COL_RESET"
     else
-        printf '%bStatus:%b Installed (v%s)\n\n' "$COL_BOLD" "$COL_RESET" "$installed_version"
+        printf '%bStatus:%b Installed (v%s)\n' "$COL_BOLD" "$COL_RESET" "$installed_version"
     fi
+    printf '%bBranch:%b %s\n\n' "$COL_BOLD" "$COL_RESET" "$current_branch"
 
     printf '  1.  Install\n'
     printf '  2.  Uninstall\n'
@@ -1017,6 +1106,7 @@ Show_Menu() {
     printf '  6.  Edit domains\n'
     printf '  7.  Issue certificates\n'
     printf '  8.  View logs\n'
+    printf '  9.  Switch branch\n'
     printf '\n'
     printf '  e.  Exit\n'
     printf '\n'
@@ -1034,6 +1124,7 @@ Show_Menu() {
         6) Edit_Domains ;;
         7) Issue_Certificates ;;
         8) View_Logs ;;
+        9) Switch_Branch ;;
         e|E|exit) exit 0 ;;
         *)
             Print_Output warn "Invalid option"
@@ -1095,6 +1186,62 @@ Configure_DNS_API() {
     return 0
 }
 
+Switch_Branch() {
+    Print_Header
+
+    local current_branch
+    current_branch=$(Get_Branch)
+
+    printf 'Current branch: %b%s%b\n\n' "$COL_CYAN" "$current_branch" "$COL_RESET"
+    printf 'Select branch:\n\n'
+    printf '  1.  main     (stable releases)\n'
+    printf '  2.  develop  (development/testing)\n'
+    printf '  3.  Other (manual entry)\n'
+    printf '\n'
+    printf 'Choose an option: '
+
+    local choice
+    choice=$(Read_Input)
+
+    local new_branch=""
+    case "$choice" in
+        1) new_branch="main" ;;
+        2) new_branch="develop" ;;
+        3)
+            printf 'Enter branch name: '
+            new_branch=$(Read_Input)
+            ;;
+        *)
+            Print_Output warn "Invalid option"
+            return 1
+            ;;
+    esac
+
+    if [ -z "$new_branch" ]; then
+        Print_Output warn "No branch specified"
+        return 1
+    fi
+
+    if [ "$new_branch" = "$current_branch" ]; then
+        Print_Output info "Already on branch: $new_branch"
+        return 0
+    fi
+
+    # Validate branch exists
+    Print_Output info "Validating branch '$new_branch'..."
+    if ! Validate_Branch "$new_branch"; then
+        Print_Output error "Branch '$new_branch' not found in repository"
+        return 1
+    fi
+
+    # Save branch preference
+    Set_Branch "$new_branch"
+    Print_Output info "Branch switched to: $new_branch"
+    Print_Output info "Run 'Update' to download files from the new branch"
+
+    return 0
+}
+
 Edit_Domains() {
     if command -v nano >/dev/null 2>&1; then
         nano "$DOMAINS_FILE"
@@ -1131,7 +1278,34 @@ View_Logs() {
 # Main Entry Point
 ################################################################################
 
+# Parse command line options
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --branch=*)
+                SCRIPT_BRANCH="${1#*=}"
+                shift
+                ;;
+            -b|--branch)
+                SCRIPT_BRANCH="$2"
+                shift 2
+                ;;
+            *)
+                # Not an option, return remaining args
+                echo "$@"
+                return
+                ;;
+        esac
+    done
+}
+
 main() {
+    # Parse options first (--branch, etc.)
+    local args
+    args=$(parse_args "$@")
+    # shellcheck disable=SC2086
+    set -- $args
+
     case "$1" in
         install)
             Menu_Install
@@ -1144,6 +1318,21 @@ main() {
             ;;
         status)
             Menu_Status
+            ;;
+        branch)
+            if [ -n "$2" ]; then
+                # Set branch
+                if Validate_Branch "$2"; then
+                    Set_Branch "$2"
+                    Print_Output info "Branch set to: $2"
+                else
+                    Print_Output error "Branch '$2' not found in repository"
+                    exit 1
+                fi
+            else
+                # Show current branch
+                printf 'Current branch: %s\n' "$(Get_Branch)"
+            fi
             ;;
         service_event)
             Handle_ServiceEvent "$2" "$3"
@@ -1161,7 +1350,16 @@ main() {
             Show_Menu
             ;;
         *)
-            printf 'Usage: %s {install|uninstall|update|status|menu}\n' "$0"
+            printf 'Usage: %s [--branch=BRANCH] {install|uninstall|update|status|branch [NAME]|menu}\n' "$0"
+            printf '\nOptions:\n'
+            printf '  --branch=NAME, -b NAME    Use specified branch for install/update\n'
+            printf '\nCommands:\n'
+            printf '  install      Install the addon\n'
+            printf '  uninstall    Remove the addon\n'
+            printf '  update       Update to latest version\n'
+            printf '  status       Show addon status\n'
+            printf '  branch       Show or set the update branch\n'
+            printf '  menu         Interactive menu (default)\n'
             exit 1
             ;;
     esac
