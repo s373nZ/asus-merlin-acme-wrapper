@@ -38,6 +38,12 @@ readonly SERVICE_EVENT="${SCRIPTS_DIR}/service-event"
 
 readonly CUSTOM_SETTINGS="/jffs/addons/custom_settings.txt"
 
+# Source Merlin helper functions (provides am_settings_get, am_settings_set, am_get_webui_page)
+# shellcheck source=/dev/null
+if [ -f /usr/sbin/helper.sh ]; then
+    . /usr/sbin/helper.sh
+fi
+
 # Colors (disabled if not in terminal)
 if [ -t 1 ]; then
     readonly COL_RED='\033[0;31m'
@@ -110,42 +116,48 @@ Confirm_Action() {
 }
 
 ################################################################################
-# Settings Functions
+# Settings Functions (using Merlin helper.sh)
 ################################################################################
 
 # Read a setting from custom_settings.txt
+# Uses am_settings_get from helper.sh with addon prefix
 Get_Setting() {
     local key="$1"
     local default="$2"
+    local full_key="${SCRIPT_NAME}_${key}"
+    local value=""
 
-    if [ -f "$CUSTOM_SETTINGS" ]; then
-        local value
-        value=$(grep "^${SCRIPT_NAME}_${key} " "$CUSTOM_SETTINGS" 2>/dev/null | cut -d' ' -f2-)
-        if [ -n "$value" ]; then
-            echo "$value"
-            return
-        fi
+    if type am_settings_get >/dev/null 2>&1; then
+        value=$(am_settings_get "$full_key")
+    elif [ -f "$CUSTOM_SETTINGS" ]; then
+        # Fallback for environments without helper.sh (e.g., testing)
+        value=$(grep "^${full_key} " "$CUSTOM_SETTINGS" 2>/dev/null | cut -d' ' -f2-)
     fi
 
-    echo "$default"
+    if [ -n "$value" ]; then
+        echo "$value"
+    else
+        echo "$default"
+    fi
 }
 
 # Write a setting to custom_settings.txt
+# Uses am_settings_set from helper.sh with addon prefix
 Set_Setting() {
     local key="$1"
     local value="$2"
     local full_key="${SCRIPT_NAME}_${key}"
 
-    # Ensure directory exists
-    mkdir -p "$(dirname "$CUSTOM_SETTINGS")"
-
-    if [ -f "$CUSTOM_SETTINGS" ]; then
-        # Remove existing entry
-        sed -i "/^${full_key} /d" "$CUSTOM_SETTINGS"
+    if type am_settings_set >/dev/null 2>&1; then
+        am_settings_set "$full_key" "$value"
+    else
+        # Fallback for environments without helper.sh (e.g., testing)
+        mkdir -p "$(dirname "$CUSTOM_SETTINGS")"
+        if [ -f "$CUSTOM_SETTINGS" ]; then
+            sed -i "/^${full_key} /d" "$CUSTOM_SETTINGS"
+        fi
+        echo "${full_key} ${value}" >> "$CUSTOM_SETTINGS"
     fi
-
-    # Add new entry
-    echo "${full_key} ${value}" >> "$CUSTOM_SETTINGS"
 }
 
 # Remove all settings for this addon
@@ -265,27 +277,40 @@ Check_Prerequisites() {
 }
 
 ################################################################################
-# Web UI Functions
+# Web UI Functions (using Merlin helper.sh)
 ################################################################################
 
 # Find an available userN.asp slot
+# Uses am_get_webui_page from helper.sh
 Get_WebUI_Page() {
-    local i=1
+    # First check if we already have a page assigned
+    local existing_page
+    existing_page=$(Get_Setting "webui_page" "")
+    if [ -n "$existing_page" ] && [ -f "/www/user/$existing_page" ]; then
+        if grep -q "ACME Wrapper" "/www/user/$existing_page" 2>/dev/null; then
+            echo "$existing_page"
+            return 0
+        fi
+    fi
 
+    # Use helper.sh function if available
+    if type am_get_webui_page >/dev/null 2>&1; then
+        local page
+        page=$(am_get_webui_page "$ADDON_DIR/${SCRIPT_NAME}.asp")
+        if [ -n "$page" ] && [ "$page" != "none" ]; then
+            echo "$page"
+            return 0
+        fi
+    fi
+
+    # Fallback: manual search for environments without helper.sh
+    local i=1
     while [ $i -le 20 ]; do
         local page="/www/user/user${i}.asp"
-
         if [ ! -f "$page" ]; then
             echo "user${i}.asp"
             return 0
         fi
-
-        # Check if this slot is already ours
-        if grep -q "ACME Wrapper" "$page" 2>/dev/null; then
-            echo "user${i}.asp"
-            return 0
-        fi
-
         i=$((i + 1))
     done
 
