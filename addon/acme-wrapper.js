@@ -57,82 +57,14 @@ function getSetting(key, defaultValue) {
     return defaultValue || '';
 }
 
-// Debug: Monitor for unexpected refreshes
-(function() {
-    // Monitor form submissions
-    var origSubmit = HTMLFormElement.prototype.submit;
-    HTMLFormElement.prototype.submit = function() {
-        console.log('DEBUG: Form submit called!', this.name, this.action);
-        console.trace();
-        return origSubmit.apply(this, arguments);
-    };
-
-    // Monitor location.href assignment
-    var origLocation = window.location.href;
-    try {
-        Object.defineProperty(window, 'location', {
-            get: function() { return origLocation; },
-            set: function(val) {
-                console.log('DEBUG: window.location assigned:', val);
-                console.trace();
-                origLocation = val;
-            }
-        });
-    } catch(e) {
-        console.log('DEBUG: Could not override location');
-    }
-
-    // Monitor location.reload
-    var origReload = location.reload.bind(location);
-    location.reload = function() {
-        console.log('DEBUG: location.reload called!');
-        console.trace();
-        return origReload();
-    };
-
-    // Monitor location.replace
-    var origReplace = location.replace.bind(location);
-    location.replace = function(url) {
-        console.log('DEBUG: location.replace called:', url);
-        console.trace();
-        return origReplace(url);
-    };
-
-    // Monitor history.go
-    var origGo = history.go.bind(history);
-    history.go = function(n) {
-        console.log('DEBUG: history.go called:', n);
-        console.trace();
-        return origGo(n);
-    };
-
-    // Monitor ALL setTimeouts
-    var origSetTimeout = window.setTimeout;
-    window.setTimeout = function(fn, delay) {
-        var id = origSetTimeout.apply(this, arguments);
-        console.log('DEBUG: setTimeout registered, id=' + id + ', delay=' + delay + 'ms');
-        return id;
-    };
-
-    // Monitor setInterval
-    var origSetInterval = window.setInterval;
-    window.setInterval = function(fn, delay) {
-        var id = origSetInterval.apply(this, arguments);
-        console.log('DEBUG: setInterval registered, id=' + id + ', delay=' + delay + 'ms');
-        return id;
-    };
-})();
-
 /**
  * Set current page path in form fields
  * Required for Merlin to know which page we're on and prevent redirect loops
  */
 function SetCurrentPage() {
-    console.log('DEBUG: SetCurrentPage start');
     var path = window.location.pathname.substring(1);
     document.form.current_page.value = path;
     document.form.next_page.value = path;
-    console.log('DEBUG: SetCurrentPage done, path=' + path);
 }
 
 /**
@@ -140,20 +72,11 @@ function SetCurrentPage() {
  * Called by body onload - must call Merlin's show_menu() for navigation
  */
 function initial() {
-    console.log('DEBUG: initial() start');
     SetCurrentPage();
-
-    // DEBUG: Skip show_menu() to test if it causes refresh
-    console.log('DEBUG: SKIPPING show_menu() for testing');
-    // show_menu();
-
-    console.log('DEBUG: calling loadSettings()');
+    show_menu();
     loadSettings();
-    console.log('DEBUG: loadSettings() done, calling updateStatusDisplay()');
     updateStatusDisplay();
-    console.log('DEBUG: updateStatusDisplay() done, calling showCertificateInfo()');
     showCertificateInfo();
-    console.log('DEBUG: initial() complete');
 }
 
 /**
