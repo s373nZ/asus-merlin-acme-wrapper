@@ -1278,8 +1278,8 @@ View_Logs() {
 # Main Entry Point
 ################################################################################
 
-# Parse command line options
-parse_args() {
+main() {
+    # Parse options first (--branch, etc.)
     while [ $# -gt 0 ]; do
         case "$1" in
             --branch=*)
@@ -1291,20 +1291,11 @@ parse_args() {
                 shift 2
                 ;;
             *)
-                # Not an option, return remaining args
-                echo "$@"
-                return
+                # Not an option, break to process command
+                break
                 ;;
         esac
     done
-}
-
-main() {
-    # Parse options first (--branch, etc.)
-    local args
-    args=$(parse_args "$@")
-    # shellcheck disable=SC2086
-    set -- $args
 
     case "$1" in
         install)
