@@ -332,6 +332,6 @@ function closeLogModal() {
 /**
  * Refresh status - reloads the page
  */
-function refreshStatus() {
+function acmeWrapperRefreshStatus() {
     location.reload();
 }

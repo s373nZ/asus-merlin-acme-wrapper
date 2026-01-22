@@ -260,7 +260,7 @@ textarea.domain-list {
                                 <h4>Actions</h4>
                                 <div style="text-align:center; padding:10px;">
                                     <input type="button" class="button_gen action-button" value="Issue/Renew Certificates" onclick="issueCertificates()">
-                                    <input type="button" class="button_gen action-button" value="Refresh Status" onclick="refreshStatus()">
+                                    <input type="button" class="button_gen action-button" value="Refresh Status" onclick="acmeWrapperRefreshStatus()">
                                     <input type="button" class="button_gen action-button" value="View Logs" onclick="viewLogs()">
                                 </div>
                             </div>
