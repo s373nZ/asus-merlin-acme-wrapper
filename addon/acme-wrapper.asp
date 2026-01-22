@@ -10,16 +10,6 @@
 <title>ACME Wrapper</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<script>
-// Prevent UI4 wrapper redirect for addon pages
-// CoBrand="99" makes noWrapper=true in state.js
-var CoBrand = "99";
-
-// Prevent notification.js loading which can cause refresh issues on addon pages
-var notice_pw_is_default = false;
-var is498support = false;
-var notice_acme_reregister = "";
-</script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -30,15 +20,7 @@ var notice_acme_reregister = "";
 <script type="text/javascript" src="/user/acme-wrapper.js"></script>
 <script>
 // Load custom settings from Merlin's addon API
-var custom_settings;
-try {
-    custom_settings = <% get_custom_settings(); %>;
-} catch(e) {
-    custom_settings = {};
-}
-if (typeof custom_settings !== 'object' || custom_settings === null) {
-    custom_settings = {};
-}
+var custom_settings = <% get_custom_settings(); %>;
 </script>
 <style>
 .acme-section {
