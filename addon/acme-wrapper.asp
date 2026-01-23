@@ -77,6 +77,7 @@ textarea.domain-list {
     color: #FFF;
     border: 1px solid #444;
     padding: 8px;
+    box-sizing: border-box;
 }
 </style>
 </head>
@@ -190,7 +191,7 @@ textarea.domain-list {
                                 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
                                 <tr>
                                     <th width="30%" style="vertical-align:top;">Domain Entries</th>
-                                    <td>
+                                    <td style="padding-right: 10px;">
                                         <textarea id="domains" class="domain-list" placeholder="# One certificate per line&#10;# Format: *.example.com|example.com|www.example.com&#10;# Non-wildcard domain should be included for certificate naming"></textarea>
                                         <p style="color:#AAAAAA; font-size:12px; margin-top:5px;">
                                             Use pipe (|) to separate domains. Wildcard domains require DNS validation.
