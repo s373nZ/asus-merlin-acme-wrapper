@@ -38,7 +38,6 @@ shfmt -i 4 -w scripts/*.sh
 
 ### Core Files
 - **scripts/asus-wrapper-acme.sh** - Main wrapper script (bind-mounted to `/usr/sbin/acme.sh` on router)
-- **scripts/install.sh** - Legacy installation script
 - **tools/** - Diagnostic and validation utilities for troubleshooting on routers
 - **tests/** - Docker-based test environment with mock acme.sh
 

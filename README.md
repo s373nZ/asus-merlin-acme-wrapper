@@ -123,7 +123,6 @@ See [docs/DNS_PROVIDERS.md](docs/DNS_PROVIDERS.md) for setup guides for:
 - [Configuration Reference](docs/CONFIGURATION.md) - All configuration options
 - [DNS Provider Setup](docs/DNS_PROVIDERS.md) - Provider-specific guides
 - [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
-- [Upgrade Guide](docs/UPGRADE.md) - Upgrading from previous versions
 
 ## Utility Scripts
 

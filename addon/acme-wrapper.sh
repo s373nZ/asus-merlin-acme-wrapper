@@ -606,51 +606,6 @@ Unmount_Wrapper() {
 }
 
 ################################################################################
-# Migration Functions
-################################################################################
-
-# Check for existing manual installation
-Check_Legacy_Install() {
-    if [ -f "/jffs/sbin/asus-wrapper-acme.sh" ]; then
-        return 0
-    fi
-    return 1
-}
-
-# Migrate from legacy installation
-Migrate_Legacy() {
-    Print_Output info "Migrating from legacy installation..."
-
-    local legacy_script="/jffs/sbin/asus-wrapper-acme.sh"
-
-    # Unmount old wrapper
-    if mount | grep -q "$SYSTEM_ACME_SH"; then
-        umount "$SYSTEM_ACME_SH" 2>/dev/null
-    fi
-
-    # Remove old post-mount entry
-    if [ -f "$POST_MOUNT" ]; then
-        sed -i '/\/jffs\/sbin\/asus-wrapper-acme.sh/d' "$POST_MOUNT"
-    fi
-
-    # Remove old script
-    if [ -f "$legacy_script" ]; then
-        rm -f "$legacy_script"
-        rmdir /jffs/sbin 2>/dev/null || true
-    fi
-
-    # Remove old tools location
-    if [ -d "/jffs/tools" ]; then
-        rm -f /jffs/tools/validate-acme-wrapper.sh
-        rm -f /jffs/tools/diagnose-acme-issue.sh
-        rmdir /jffs/tools 2>/dev/null || true
-    fi
-
-    Print_Output info "Legacy installation migrated"
-    return 0
-}
-
-################################################################################
 # Download Functions
 ################################################################################
 
@@ -728,17 +683,6 @@ Menu_Install() {
     if ! Check_Prerequisites; then
         Print_Output error "Prerequisites not met, aborting installation"
         return 1
-    fi
-
-    # Check for legacy install
-    if Check_Legacy_Install; then
-        Print_Output warn "Legacy installation detected"
-        if Confirm_Action "Migrate existing installation?"; then
-            Migrate_Legacy
-        else
-            Print_Output error "Cannot install alongside legacy installation"
-            return 1
-        fi
     fi
 
     # Download files
