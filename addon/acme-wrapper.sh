@@ -67,7 +67,7 @@ fi
 # Utility Functions
 ################################################################################
 
-Print_Output() {
+print_output() {
     local level="$1"
     local msg="$2"
     local color=""
@@ -85,14 +85,14 @@ Print_Output() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $msg" >> "$SCRIPT_LOG"
 }
 
-Print_Header() {
+print_header() {
     printf '\n%b============================================%b\n' "$COL_CYAN" "$COL_RESET"
     printf '%b  %s v%s%b\n' "$COL_BOLD" "$SCRIPT_NAME" "$SCRIPT_VERSION" "$COL_RESET"
     printf '%b============================================%b\n\n' "$COL_CYAN" "$COL_RESET"
 }
 
 # Read user input, handling piped scripts (curl | sh) by reading from /dev/tty
-Read_Input() {
+read_input() {
     local input=""
     if [ -t 0 ]; then
         # stdin is a terminal, read normally
@@ -104,12 +104,12 @@ Read_Input() {
     echo "$input"
 }
 
-Confirm_Action() {
+confirm_action() {
     local prompt="$1"
     local response
 
     printf '%s [y/N]: ' "$prompt"
-    response=$(Read_Input)
+    response=$(read_input)
 
     case "$response" in
         [yY]|[yY][eE][sS]) return 0 ;;
@@ -123,7 +123,7 @@ Confirm_Action() {
 
 # Read a setting from custom_settings.txt
 # Uses am_settings_get from helper.sh with addon prefix
-Get_Setting() {
+get_setting() {
     local key="$1"
     local default="$2"
     local full_key="${SCRIPT_NAME}_${key}"
@@ -145,7 +145,7 @@ Get_Setting() {
 
 # Write a setting to custom_settings.txt
 # Uses am_settings_set from helper.sh with addon prefix
-Set_Setting() {
+set_setting() {
     local key="$1"
     local value="$2"
     local full_key="${SCRIPT_NAME}_${key}"
@@ -163,7 +163,7 @@ Set_Setting() {
 }
 
 # Remove all settings for this addon
-Clear_Settings() {
+clear_settings() {
     if [ -f "$CUSTOM_SETTINGS" ]; then
         sed -i "/^${SCRIPT_NAME}_/d" "$CUSTOM_SETTINGS"
     fi
@@ -174,7 +174,7 @@ Clear_Settings() {
 ################################################################################
 
 # Get the configured branch (from settings, env var, or default)
-Get_Branch() {
+get_branch() {
     # Command-line/env override takes precedence
     if [ -n "$SCRIPT_BRANCH" ]; then
         echo "$SCRIPT_BRANCH"
@@ -183,7 +183,7 @@ Get_Branch() {
 
     # Check settings
     local saved_branch
-    saved_branch=$(Get_Setting "branch" "")
+    saved_branch=$(get_setting "branch" "")
     if [ -n "$saved_branch" ]; then
         echo "$saved_branch"
         return
@@ -194,21 +194,21 @@ Get_Branch() {
 }
 
 # Set the branch for this session and save to settings
-Set_Branch() {
+set_branch() {
     local branch="$1"
     SCRIPT_BRANCH="$branch"
-    Set_Setting "branch" "$branch"
+    set_setting "branch" "$branch"
 }
 
 # Get the raw GitHub URL for the current branch
-Get_Script_URL() {
+get_script_url() {
     local branch
-    branch=$(Get_Branch)
+    branch=$(get_branch)
     echo "https://raw.githubusercontent.com/${SCRIPT_REPO}/${branch}"
 }
 
 # Validate that a branch exists on the remote repository
-Validate_Branch() {
+validate_branch() {
     local branch="$1"
     local test_url="https://raw.githubusercontent.com/${SCRIPT_REPO}/${branch}/addon/acme-wrapper.sh"
 
@@ -220,7 +220,7 @@ Validate_Branch() {
 }
 
 # Load configuration from conf file
-Load_Config() {
+load_config() {
     if [ -f "$SCRIPT_CONF" ]; then
         # shellcheck source=/dev/null
         . "$SCRIPT_CONF"
@@ -228,7 +228,7 @@ Load_Config() {
 }
 
 # Save configuration to conf file
-Save_Config() {
+save_config() {
     cat > "$SCRIPT_CONF" << EOF
 # ACME Wrapper Configuration
 # Generated on $(date)
@@ -246,14 +246,14 @@ EOF
 # Prerequisite Checks
 ################################################################################
 
-Check_Lock() {
+check_lock() {
     local lockfile="/tmp/${SCRIPT_NAME}.lock"
 
     if [ -f "$lockfile" ]; then
         local pid
         pid=$(cat "$lockfile" 2>/dev/null)
         if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-            Print_Output error "Another instance is running (PID: $pid)"
+            print_output error "Another instance is running (PID: $pid)"
             return 1
         fi
         rm -f "$lockfile"
@@ -264,65 +264,65 @@ Check_Lock() {
     return 0
 }
 
-Check_JFFS() {
+check_jffs() {
     if [ ! -d "/jffs" ]; then
-        Print_Output error "JFFS partition not found"
+        print_output error "JFFS partition not found"
         return 1
     fi
 
     if [ ! -w "/jffs" ]; then
-        Print_Output error "JFFS partition is not writable"
+        print_output error "JFFS partition is not writable"
         return 1
     fi
 
     return 0
 }
 
-Check_Entware() {
+check_entware() {
     if [ ! -d "/opt/bin" ]; then
-        Print_Output error "Entware not installed"
-        Print_Output info "Install Entware first: amtm -> i"
+        print_output error "Entware not installed"
+        print_output info "Install Entware first: amtm -> i"
         return 1
     fi
     return 0
 }
 
-Check_AcmeSh() {
+check_acme_sh() {
     if [ ! -x "$REAL_ACME_SH" ]; then
-        Print_Output warn "acme.sh not found at $REAL_ACME_SH"
+        print_output warn "acme.sh not found at $REAL_ACME_SH"
         return 1
     fi
     return 0
 }
 
-Check_Prerequisites() {
-    Print_Output info "Checking prerequisites..."
+check_prerequisites() {
+    print_output info "Checking prerequisites..."
 
-    if ! Check_JFFS; then
+    if ! check_jffs; then
         return 1
     fi
-    Print_Output info "JFFS partition OK"
+    print_output info "JFFS partition OK"
 
-    if ! Check_Entware; then
+    if ! check_entware; then
         return 1
     fi
-    Print_Output info "Entware OK"
+    print_output info "Entware OK"
 
-    if ! Check_AcmeSh; then
-        Print_Output info "Attempting to install acme.sh..."
+    if ! check_acme_sh; then
+        print_output info "Attempting to install acme.sh..."
         if opkg update && opkg install acme; then
-            if Check_AcmeSh; then
-                Print_Output info "acme.sh installed successfully"
+            if check_acme_sh; then
+                print_output info "acme.sh installed successfully"
             else
-                Print_Output error "Failed to install acme.sh"
+                print_output error "Failed to install acme.sh"
                 return 1
             fi
         else
-            Print_Output error "Failed to install acme.sh via opkg"
+            print_output error "Failed to install acme.sh via opkg"
             return 1
         fi
     else
-        Print_Output info "acme.sh OK: $($REAL_ACME_SH --version 2>/dev/null | head -1)"
+        print_output info "acme.sh OK: $($REAL_ACME_SH --version 2>/dev/null | head -1)"
     fi
 
     return 0
@@ -334,10 +334,10 @@ Check_Prerequisites() {
 
 # Find an available userN.asp slot
 # Uses am_get_webui_page from helper.sh
-Get_WebUI_Page() {
+get_webui_page() {
     # First check if we already have a page assigned
     local existing_page
-    existing_page=$(Get_Setting "webui_page" "")
+    existing_page=$(get_setting "webui_page" "")
     if [ -n "$existing_page" ] && [ -f "/www/user/$existing_page" ]; then
         if grep -q "ACME Wrapper" "/www/user/$existing_page" 2>/dev/null; then
             echo "$existing_page"
@@ -371,24 +371,24 @@ Get_WebUI_Page() {
 }
 
 # Mount the Web UI page
-Mount_WebUI() {
-    Print_Output info "Setting up Web UI..."
+mount_webui() {
+    print_output info "Setting up Web UI..."
 
     local page
-    page=$(Get_WebUI_Page)
+    page=$(get_webui_page)
 
     if [ -z "$page" ]; then
-        Print_Output error "No available Web UI slot"
+        print_output error "No available Web UI slot"
         return 1
     fi
 
-    Print_Output info "Using Web UI slot: $page"
+    print_output info "Using Web UI slot: $page"
 
     # Copy our ASP file
     if [ -f "$WEBAPP_FILE" ]; then
         cp "$WEBAPP_FILE" "/www/user/$page"
     else
-        Print_Output warn "Web UI file not found, skipping"
+        print_output warn "Web UI file not found, skipping"
         return 0
     fi
 
@@ -418,18 +418,18 @@ Mount_WebUI() {
     mount -o bind "$tmp_menutree" "$menutree_file"
 
     # Store the page slot for later
-    Set_Setting "webui_page" "$page"
+    set_setting "webui_page" "$page"
 
-    Print_Output info "Web UI mounted successfully"
+    print_output info "Web UI mounted successfully"
     return 0
 }
 
 # Unmount the Web UI page
-Unmount_WebUI() {
-    Print_Output info "Removing Web UI..."
+unmount_webui() {
+    print_output info "Removing Web UI..."
 
     local page
-    page=$(Get_Setting "webui_page" "")
+    page=$(get_setting "webui_page" "")
 
     # Unmount menuTree
     local menutree_file="/www/require/modules/menuTree.js"
@@ -442,7 +442,7 @@ Unmount_WebUI() {
 
     rm -f "/www/user/${SCRIPT_NAME}.js"
 
-    Print_Output info "Web UI removed"
+    print_output info "Web UI removed"
     return 0
 }
 
@@ -451,15 +451,15 @@ Unmount_WebUI() {
 ################################################################################
 
 # Add entry to post-mount script
-Setup_PostMount() {
-    Print_Output info "Configuring post-mount hook..."
+setup_post_mount() {
+    print_output info "Configuring post-mount hook..."
 
     mkdir -p "$SCRIPTS_DIR"
 
     if [ -f "$POST_MOUNT" ]; then
         # Check if already configured
         if grep -q "$SCRIPT_NAME" "$POST_MOUNT"; then
-            Print_Output info "post-mount hook already configured"
+            print_output info "post-mount hook already configured"
             return 0
         fi
 
@@ -486,13 +486,13 @@ POSTMOUNT
     fi
 
     chmod +x "$POST_MOUNT"
-    Print_Output info "post-mount hook configured"
+    print_output info "post-mount hook configured"
     return 0
 }
 
 # Remove entry from post-mount script
-Remove_PostMount() {
-    Print_Output info "Removing post-mount hook..."
+remove_post_mount() {
+    print_output info "Removing post-mount hook..."
 
     if [ -f "$POST_MOUNT" ]; then
         # Remove our section
@@ -501,20 +501,20 @@ Remove_PostMount() {
         sed -i '/^$/N;/^\n$/d' "$POST_MOUNT"
     fi
 
-    Print_Output info "post-mount hook removed"
+    print_output info "post-mount hook removed"
     return 0
 }
 
 # Add entry to service-event script
-Setup_ServiceEvent() {
-    Print_Output info "Configuring service-event hook..."
+setup_service_event() {
+    print_output info "Configuring service-event hook..."
 
     mkdir -p "$SCRIPTS_DIR"
 
     if [ -f "$SERVICE_EVENT" ]; then
         # Check if already configured
         if grep -q "$SCRIPT_NAME" "$SERVICE_EVENT"; then
-            Print_Output info "service-event hook already configured"
+            print_output info "service-event hook already configured"
             return 0
         fi
 
@@ -539,13 +539,13 @@ SERVICEEVENT
     fi
 
     chmod +x "$SERVICE_EVENT"
-    Print_Output info "service-event hook configured"
+    print_output info "service-event hook configured"
     return 0
 }
 
 # Remove entry from service-event script
-Remove_ServiceEvent() {
-    Print_Output info "Removing service-event hook..."
+remove_service_event() {
+    print_output info "Removing service-event hook..."
 
     if [ -f "$SERVICE_EVENT" ]; then
         # Remove our section
@@ -554,7 +554,7 @@ Remove_ServiceEvent() {
         sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
     fi
 
-    Print_Output info "service-event hook removed"
+    print_output info "service-event hook removed"
     return 0
 }
 
@@ -563,11 +563,11 @@ Remove_ServiceEvent() {
 ################################################################################
 
 # Mount the wrapper script over system acme.sh
-Mount_Wrapper() {
-    Print_Output info "Mounting wrapper..."
+mount_wrapper() {
+    print_output info "Mounting wrapper..."
 
     if ! [ -x "$WRAPPER_SCRIPT" ]; then
-        Print_Output error "Wrapper script not found: $WRAPPER_SCRIPT"
+        print_output error "Wrapper script not found: $WRAPPER_SCRIPT"
         return 1
     fi
 
@@ -578,28 +578,28 @@ Mount_Wrapper() {
 
     # Mount wrapper
     if mount -o bind "$WRAPPER_SCRIPT" "$SYSTEM_ACME_SH"; then
-        Print_Output info "Wrapper mounted successfully"
+        print_output info "Wrapper mounted successfully"
         return 0
     else
-        Print_Output error "Failed to mount wrapper"
+        print_output error "Failed to mount wrapper"
         return 1
     fi
 }
 
 # Unmount the wrapper script
-Unmount_Wrapper() {
-    Print_Output info "Unmounting wrapper..."
+unmount_wrapper() {
+    print_output info "Unmounting wrapper..."
 
     if mount | grep -q "$SYSTEM_ACME_SH"; then
         if umount "$SYSTEM_ACME_SH"; then
-            Print_Output info "Wrapper unmounted"
+            print_output info "Wrapper unmounted"
             return 0
         else
-            Print_Output error "Failed to unmount wrapper"
+            print_output error "Failed to unmount wrapper"
             return 1
         fi
     else
-        Print_Output info "Wrapper not mounted"
+        print_output info "Wrapper not mounted"
     fi
 
     return 0
@@ -609,25 +609,25 @@ Unmount_Wrapper() {
 # Download Functions
 ################################################################################
 
-Download_File() {
+download_file() {
     local url="$1"
     local dest="$2"
 
     if curl -fsSL "$url" -o "$dest"; then
         return 0
     else
-        Print_Output error "Failed to download: $url"
+        print_output error "Failed to download: $url"
         return 1
     fi
 }
 
-Download_Addon_Files() {
+download_addon_files() {
     local base_url
-    base_url=$(Get_Script_URL)
+    base_url=$(get_script_url)
     local branch
-    branch=$(Get_Branch)
+    branch=$(get_branch)
 
-    Print_Output info "Downloading addon files from branch: $branch"
+    print_output info "Downloading addon files from branch: $branch"
 
     # Create directories
     mkdir -p "$ADDON_DIR"
@@ -635,25 +635,25 @@ Download_Addon_Files() {
     mkdir -p "$LE_DIR"
 
     # Download wrapper script
-    if ! Download_File "${base_url}/scripts/asus-wrapper-acme.sh" "$WRAPPER_SCRIPT"; then
+    if ! download_file "${base_url}/scripts/asus-wrapper-acme.sh" "$WRAPPER_SCRIPT"; then
         return 1
     fi
     chmod +x "$WRAPPER_SCRIPT"
 
     # Download Web UI files
-    Download_File "${base_url}/addon/${SCRIPT_NAME}.asp" "$WEBAPP_FILE" || true
-    Download_File "${base_url}/addon/${SCRIPT_NAME}.js" "$WEBAPP_JS" || true
+    download_file "${base_url}/addon/${SCRIPT_NAME}.asp" "$WEBAPP_FILE" || true
+    download_file "${base_url}/addon/${SCRIPT_NAME}.js" "$WEBAPP_JS" || true
 
     # Download tools
-    Download_File "${base_url}/tools/validate-acme-wrapper.sh" "$ADDON_DIR/tools/validate-acme-wrapper.sh" || true
-    Download_File "${base_url}/tools/diagnose-acme-issue.sh" "$ADDON_DIR/tools/diagnose-acme-issue.sh" || true
+    download_file "${base_url}/tools/validate-acme-wrapper.sh" "$ADDON_DIR/tools/validate-acme-wrapper.sh" || true
+    download_file "${base_url}/tools/diagnose-acme-issue.sh" "$ADDON_DIR/tools/diagnose-acme-issue.sh" || true
     chmod +x "$ADDON_DIR/tools/"*.sh 2>/dev/null || true
 
     # Download this script (self-update)
-    Download_File "${base_url}/addon/acme-wrapper.sh" "$ADDON_DIR/acme-wrapper.sh" || true
+    download_file "${base_url}/addon/acme-wrapper.sh" "$ADDON_DIR/acme-wrapper.sh" || true
     chmod +x "$ADDON_DIR/acme-wrapper.sh"
 
-    Print_Output info "Addon files downloaded"
+    print_output info "Addon files downloaded"
     return 0
 }
 
@@ -661,44 +661,44 @@ Download_Addon_Files() {
 # Install/Uninstall Functions
 ################################################################################
 
-Menu_Install() {
-    Print_Header
+menu_install() {
+    print_header
 
     local branch
-    branch=$(Get_Branch)
-    Print_Output info "Installing $SCRIPT_NAME from branch: $branch"
+    branch=$(get_branch)
+    print_output info "Installing $SCRIPT_NAME from branch: $branch"
 
     # Validate branch exists
-    if ! Validate_Branch "$branch"; then
-        Print_Output error "Branch '$branch' not found in repository"
+    if ! validate_branch "$branch"; then
+        print_output error "Branch '$branch' not found in repository"
         return 1
     fi
 
     # Check lock
-    if ! Check_Lock; then
+    if ! check_lock; then
         return 1
     fi
 
     # Check prerequisites
-    if ! Check_Prerequisites; then
-        Print_Output error "Prerequisites not met, aborting installation"
+    if ! check_prerequisites; then
+        print_output error "Prerequisites not met, aborting installation"
         return 1
     fi
 
     # Download files
-    if ! Download_Addon_Files; then
-        Print_Output error "Failed to download addon files"
+    if ! download_addon_files; then
+        print_output error "Failed to download addon files"
         return 1
     fi
 
     # Save branch preference
-    Set_Setting "branch" "$branch"
+    set_setting "branch" "$branch"
 
     # Create default config
     ACME_WRAPPER_DNS_API="${ACME_WRAPPER_DNS_API:-dns_aws}"
     ACME_WRAPPER_DEBUG="${ACME_WRAPPER_DEBUG:-0}"
     ACME_WRAPPER_DNSSLEEP="${ACME_WRAPPER_DNSSLEEP:-120}"
-    Save_Config
+    save_config
 
     # Create domains file if missing
     if [ ! -f "$DOMAINS_FILE" ]; then
@@ -708,26 +708,26 @@ Menu_Install() {
 # Uncomment and edit the line below:
 # *.yourdomain.com|yourdomain.com
 EOF
-        Print_Output warn "Created sample domains file: $DOMAINS_FILE"
+        print_output warn "Created sample domains file: $DOMAINS_FILE"
     fi
 
     # Setup hooks
-    Setup_PostMount
-    Setup_ServiceEvent
+    setup_post_mount
+    setup_service_event
 
     # Mount Web UI
-    Mount_WebUI
+    mount_webui
 
     # Mount wrapper
-    Mount_Wrapper
+    mount_wrapper
 
     # Store installation info
-    Set_Setting "version" "$SCRIPT_VERSION"
-    Set_Setting "installed" "$(date '+%Y-%m-%d %H:%M:%S')"
+    set_setting "version" "$SCRIPT_VERSION"
+    set_setting "installed" "$(date '+%Y-%m-%d %H:%M:%S')"
 
-    Print_Output info "Installation complete!"
+    print_output info "Installation complete!"
     printf '\n'
-    Print_Output info "Next steps:"
+    print_output info "Next steps:"
     printf '  1. Configure domains: nano %s\n' "$DOMAINS_FILE"
     printf '  2. Add DNS credentials: nano %s\n' "$ACCOUNT_CONF"
     printf '  3. Issue certificate: service restart_letsencrypt\n'
@@ -737,35 +737,35 @@ EOF
     return 0
 }
 
-Menu_Uninstall() {
-    Print_Header
-    Print_Output warn "Uninstalling $SCRIPT_NAME..."
+menu_uninstall() {
+    print_header
+    print_output warn "Uninstalling $SCRIPT_NAME..."
 
-    if ! Check_Lock; then
+    if ! check_lock; then
         return 1
     fi
 
     # Confirm
-    if ! Confirm_Action "Are you sure you want to uninstall?"; then
-        Print_Output info "Uninstall cancelled"
+    if ! confirm_action "Are you sure you want to uninstall?"; then
+        print_output info "Uninstall cancelled"
         return 0
     fi
 
     # Ask about config backup
     local backup_config=0
-    if Confirm_Action "Backup configuration files?"; then
+    if confirm_action "Backup configuration files?"; then
         backup_config=1
     fi
 
     # Unmount wrapper
-    Unmount_Wrapper
+    unmount_wrapper
 
     # Unmount Web UI
-    Unmount_WebUI
+    unmount_webui
 
     # Remove hooks
-    Remove_PostMount
-    Remove_ServiceEvent
+    remove_post_mount
+    remove_service_event
 
     # Backup config if requested
     if [ "$backup_config" = "1" ]; then
@@ -777,47 +777,47 @@ Menu_Uninstall() {
         [ -f "$DOMAINS_FILE" ] && cp "$DOMAINS_FILE" "$backup_dir/"
         [ -f "$ACCOUNT_CONF" ] && cp "$ACCOUNT_CONF" "$backup_dir/"
 
-        Print_Output info "Configuration backed up to: $backup_dir"
+        print_output info "Configuration backed up to: $backup_dir"
     fi
 
     # Clear settings
-    Clear_Settings
+    clear_settings
 
     # Remove addon directory
     rm -rf "$ADDON_DIR"
 
     # Note: We don't remove /jffs/.le as it contains user data
 
-    Print_Output info "Uninstallation complete"
+    print_output info "Uninstallation complete"
     return 0
 }
 
-Menu_Update() {
-    Print_Header
+menu_update() {
+    print_header
 
     local branch
-    branch=$(Get_Branch)
-    Print_Output info "Updating $SCRIPT_NAME from branch: $branch"
+    branch=$(get_branch)
+    print_output info "Updating $SCRIPT_NAME from branch: $branch"
 
     # Validate branch exists
-    if ! Validate_Branch "$branch"; then
-        Print_Output error "Branch '$branch' not found in repository"
+    if ! validate_branch "$branch"; then
+        print_output error "Branch '$branch' not found in repository"
         return 1
     fi
 
-    if ! Check_Lock; then
+    if ! check_lock; then
         return 1
     fi
 
     # Store current config
-    Load_Config
+    load_config
     local current_dns_api="$ACME_WRAPPER_DNS_API"
     local current_debug="$ACME_WRAPPER_DEBUG"
     local current_dnssleep="$ACME_WRAPPER_DNSSLEEP"
 
     # Download new files
-    if ! Download_Addon_Files; then
-        Print_Output error "Update failed"
+    if ! download_addon_files; then
+        print_output error "Update failed"
         return 1
     fi
 
@@ -825,23 +825,23 @@ Menu_Update() {
     ACME_WRAPPER_DNS_API="$current_dns_api"
     ACME_WRAPPER_DEBUG="$current_debug"
     ACME_WRAPPER_DNSSLEEP="$current_dnssleep"
-    Save_Config
+    save_config
 
     # Save branch preference (in case it was changed via SCRIPT_BRANCH)
-    Set_Setting "branch" "$branch"
+    set_setting "branch" "$branch"
 
     # Remount wrapper
-    Mount_Wrapper
+    mount_wrapper
 
     # Remount Web UI
-    Unmount_WebUI
-    Mount_WebUI
+    unmount_webui
+    mount_webui
 
     # Update version in settings
-    Set_Setting "version" "$SCRIPT_VERSION"
-    Set_Setting "updated" "$(date '+%Y-%m-%d %H:%M:%S')"
+    set_setting "version" "$SCRIPT_VERSION"
+    set_setting "updated" "$(date '+%Y-%m-%d %H:%M:%S')"
 
-    Print_Output info "Update complete: v$SCRIPT_VERSION (branch: $branch)"
+    print_output info "Update complete: v$SCRIPT_VERSION (branch: $branch)"
     return 0
 }
 
@@ -849,14 +849,14 @@ Menu_Update() {
 # Status and Info Functions
 ################################################################################
 
-Menu_Status() {
-    Print_Header
+menu_status() {
+    print_header
 
     local installed_version
-    installed_version=$(Get_Setting "version" "not installed")
+    installed_version=$(get_setting "version" "not installed")
 
     local current_branch
-    current_branch=$(Get_Branch)
+    current_branch=$(get_branch)
 
     printf '%bInstallation Status:%b\n' "$COL_BOLD" "$COL_RESET"
     printf '  Addon version:    %s\n' "$installed_version"
@@ -874,7 +874,7 @@ Menu_Status() {
 
     # Check Web UI
     local webui_page
-    webui_page=$(Get_Setting "webui_page" "")
+    webui_page=$(get_setting "webui_page" "")
     if [ -n "$webui_page" ] && [ -f "/www/user/$webui_page" ]; then
         printf '  Web UI:           %b[ACTIVE]%b (%s)\n' "$COL_GREEN" "$COL_RESET" "$webui_page"
     else
@@ -892,7 +892,7 @@ Menu_Status() {
 
     # Check configuration
     printf '\n%bConfiguration:%b\n' "$COL_BOLD" "$COL_RESET"
-    Load_Config
+    load_config
     printf '  DNS API:          %s\n' "${ACME_WRAPPER_DNS_API:-dns_aws}"
     printf '  DNS Sleep:        %s seconds\n' "${ACME_WRAPPER_DNSSLEEP:-120}"
     printf '  Debug mode:       %s\n' "${ACME_WRAPPER_DEBUG:-0}"
@@ -945,24 +945,24 @@ Menu_Status() {
 # Service Event Handler
 ################################################################################
 
-Handle_ServiceEvent() {
+handle_service_event() {
     local action="$1"
     local event="$2"
 
     case "$action" in
         start)
             # Called when web UI saves settings
-            WebUI_Apply
+            webui_apply
             ;;
         restart)
             # Called when user clicks restart
-            Mount_Wrapper
+            mount_wrapper
             ;;
     esac
 }
 
-WebUI_Apply() {
-    Print_Output info "Applying Web UI settings..."
+webui_apply() {
+    print_output info "Applying Web UI settings..."
 
     # Read settings from custom_settings.txt
     local dns_api
@@ -970,22 +970,22 @@ WebUI_Apply() {
     local dns_sleep
     local domains
 
-    dns_api=$(Get_Setting "dns_api" "dns_aws")
-    debug_mode=$(Get_Setting "debug" "0")
-    dns_sleep=$(Get_Setting "dnssleep" "120")
-    domains=$(Get_Setting "domains" "")
+    dns_api=$(get_setting "dns_api" "dns_aws")
+    debug_mode=$(get_setting "debug" "0")
+    dns_sleep=$(get_setting "dnssleep" "120")
+    domains=$(get_setting "domains" "")
 
     # Update config
     ACME_WRAPPER_DNS_API="$dns_api"
     ACME_WRAPPER_DEBUG="$debug_mode"
     ACME_WRAPPER_DNSSLEEP="$dns_sleep"
-    Save_Config
+    save_config
 
     # Update domains file if provided
     if [ -n "$domains" ]; then
         # Decode domains (newlines encoded as \n)
         printf '%s\n' "$domains" | sed 's/\\n/\n/g' > "$DOMAINS_FILE"
-        Print_Output info "Updated domains file"
+        print_output info "Updated domains file"
     fi
 
     # Update credentials in account.conf if any were provided
@@ -1012,13 +1012,13 @@ WebUI_Apply() {
             fi
         done
 
-        Print_Output info "Updated credentials in account.conf"
+        print_output info "Updated credentials in account.conf"
 
         # Clean up credential settings from custom_settings (they're now in account.conf)
         sed -i "/^${SCRIPT_NAME}_cred_/d" "$CUSTOM_SETTINGS"
     fi
 
-    Print_Output info "Settings applied"
+    print_output info "Settings applied"
     return 0
 }
 
@@ -1026,14 +1026,14 @@ WebUI_Apply() {
 # Interactive Menu
 ################################################################################
 
-Show_Menu() {
-    Print_Header
+show_menu() {
+    print_header
 
     local installed_version
-    installed_version=$(Get_Setting "version" "")
+    installed_version=$(get_setting "version" "")
 
     local current_branch
-    current_branch=$(Get_Branch)
+    current_branch=$(get_branch)
 
     if [ -z "$installed_version" ]; then
         printf '%bStatus:%b Not installed\n' "$COL_BOLD" "$COL_RESET"
@@ -1057,33 +1057,33 @@ Show_Menu() {
     printf 'Choose an option: '
 
     local choice
-    choice=$(Read_Input)
+    choice=$(read_input)
 
     case "$choice" in
-        1) Menu_Install ;;
-        2) Menu_Uninstall ;;
-        3) Menu_Update ;;
-        4) Menu_Status ;;
-        5) Configure_DNS_API ;;
-        6) Edit_Domains ;;
-        7) Issue_Certificates ;;
-        8) View_Logs ;;
-        9) Switch_Branch ;;
+        1) menu_install ;;
+        2) menu_uninstall ;;
+        3) menu_update ;;
+        4) menu_status ;;
+        5) configure_dns_api ;;
+        6) edit_domains ;;
+        7) issue_certificates ;;
+        8) view_logs ;;
+        9) switch_branch ;;
         e|E|exit) exit 0 ;;
         *)
-            Print_Output warn "Invalid option"
+            print_output warn "Invalid option"
             sleep 1
             ;;
     esac
 
     # Return to menu after action
     printf '\nPress Enter to continue...'
-    Read_Input > /dev/null
-    Show_Menu
+    read_input > /dev/null
+    show_menu
 }
 
-Configure_DNS_API() {
-    Print_Header
+configure_dns_api() {
+    print_header
     printf 'Select DNS Provider:\n\n'
     printf '  1.  AWS Route53       (dns_aws)\n'
     printf '  2.  Cloudflare        (dns_cf)\n'
@@ -1097,7 +1097,7 @@ Configure_DNS_API() {
     printf 'Choose an option: '
 
     local choice
-    choice=$(Read_Input)
+    choice=$(read_input)
 
     local dns_api=""
     case "$choice" in
@@ -1110,31 +1110,31 @@ Configure_DNS_API() {
         7) dns_api="dns_vultr" ;;
         8)
             printf 'Enter DNS API name (e.g., dns_xxx): '
-            dns_api=$(Read_Input)
+            dns_api=$(read_input)
             ;;
         *)
-            Print_Output warn "Invalid option"
+            print_output warn "Invalid option"
             return 1
             ;;
     esac
 
     if [ -n "$dns_api" ]; then
-        Load_Config
+        load_config
         ACME_WRAPPER_DNS_API="$dns_api"
-        Save_Config
-        Set_Setting "dns_api" "$dns_api"
-        Print_Output info "DNS API set to: $dns_api"
-        Print_Output info "Don't forget to configure credentials in: $ACCOUNT_CONF"
+        save_config
+        set_setting "dns_api" "$dns_api"
+        print_output info "DNS API set to: $dns_api"
+        print_output info "Don't forget to configure credentials in: $ACCOUNT_CONF"
     fi
 
     return 0
 }
 
-Switch_Branch() {
-    Print_Header
+switch_branch() {
+    print_header
 
     local current_branch
-    current_branch=$(Get_Branch)
+    current_branch=$(get_branch)
 
     printf 'Current branch: %b%s%b\n\n' "$COL_CYAN" "$current_branch" "$COL_RESET"
     printf 'Select branch:\n\n'
@@ -1145,7 +1145,7 @@ Switch_Branch() {
     printf 'Choose an option: '
 
     local choice
-    choice=$(Read_Input)
+    choice=$(read_input)
 
     local new_branch=""
     case "$choice" in
@@ -1153,65 +1153,65 @@ Switch_Branch() {
         2) new_branch="develop" ;;
         3)
             printf 'Enter branch name: '
-            new_branch=$(Read_Input)
+            new_branch=$(read_input)
             ;;
         *)
-            Print_Output warn "Invalid option"
+            print_output warn "Invalid option"
             return 1
             ;;
     esac
 
     if [ -z "$new_branch" ]; then
-        Print_Output warn "No branch specified"
+        print_output warn "No branch specified"
         return 1
     fi
 
     if [ "$new_branch" = "$current_branch" ]; then
-        Print_Output info "Already on branch: $new_branch"
+        print_output info "Already on branch: $new_branch"
         return 0
     fi
 
     # Validate branch exists
-    Print_Output info "Validating branch '$new_branch'..."
-    if ! Validate_Branch "$new_branch"; then
-        Print_Output error "Branch '$new_branch' not found in repository"
+    print_output info "Validating branch '$new_branch'..."
+    if ! validate_branch "$new_branch"; then
+        print_output error "Branch '$new_branch' not found in repository"
         return 1
     fi
 
     # Save branch preference
-    Set_Branch "$new_branch"
-    Print_Output info "Branch switched to: $new_branch"
-    Print_Output info "Run 'Update' to download files from the new branch"
+    set_branch "$new_branch"
+    print_output info "Branch switched to: $new_branch"
+    print_output info "Run 'Update' to download files from the new branch"
 
     return 0
 }
 
-Edit_Domains() {
+edit_domains() {
     if command -v nano >/dev/null 2>&1; then
         nano "$DOMAINS_FILE"
     elif command -v vi >/dev/null 2>&1; then
         vi "$DOMAINS_FILE"
     else
-        Print_Output error "No text editor available"
-        Print_Output info "Edit manually: $DOMAINS_FILE"
+        print_output error "No text editor available"
+        print_output info "Edit manually: $DOMAINS_FILE"
     fi
 }
 
-Issue_Certificates() {
-    Print_Output info "Triggering certificate issuance..."
+issue_certificates() {
+    print_output info "Triggering certificate issuance..."
     service restart_letsencrypt
-    Print_Output info "Certificate issuance triggered"
-    Print_Output info "Check router logs for progress"
+    print_output info "Certificate issuance triggered"
+    print_output info "Check router logs for progress"
 }
 
-View_Logs() {
-    Print_Header
+view_logs() {
+    print_header
     printf 'Recent log entries:\n\n'
 
     if [ -f "$SCRIPT_LOG" ]; then
         tail -50 "$SCRIPT_LOG"
     else
-        Print_Output info "No log file found"
+        print_output info "No log file found"
     fi
 
     printf '\nSystem log (acme related):\n\n'
@@ -1243,46 +1243,46 @@ main() {
 
     case "$1" in
         install)
-            Menu_Install
+            menu_install
             ;;
         uninstall)
-            Menu_Uninstall
+            menu_uninstall
             ;;
         update)
-            Menu_Update
+            menu_update
             ;;
         status)
-            Menu_Status
+            menu_status
             ;;
         branch)
             if [ -n "$2" ]; then
                 # Set branch
-                if Validate_Branch "$2"; then
-                    Set_Branch "$2"
-                    Print_Output info "Branch set to: $2"
+                if validate_branch "$2"; then
+                    set_branch "$2"
+                    print_output info "Branch set to: $2"
                 else
-                    Print_Output error "Branch '$2' not found in repository"
+                    print_output error "Branch '$2' not found in repository"
                     exit 1
                 fi
             else
                 # Show current branch
-                printf 'Current branch: %s\n' "$(Get_Branch)"
+                printf 'Current branch: %s\n' "$(get_branch)"
             fi
             ;;
         service_event)
-            Handle_ServiceEvent "$2" "$3"
+            handle_service_event "$2" "$3"
             ;;
         webui)
-            WebUI_Apply
+            webui_apply
             ;;
         mount)
-            Mount_Wrapper
+            mount_wrapper
             ;;
         unmount)
-            Unmount_Wrapper
+            unmount_wrapper
             ;;
         menu|"")
-            Show_Menu
+            show_menu
             ;;
         *)
             printf 'Usage: %s [--branch=BRANCH] {install|uninstall|update|status|branch [NAME]|menu}\n' "$0"
