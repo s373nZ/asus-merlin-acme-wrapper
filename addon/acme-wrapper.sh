@@ -522,9 +522,11 @@ setup_service_event() {
         cat >> "$SERVICE_EVENT" << 'SERVICEEVENT'
 
 # acme-wrapper: Handle web UI events
-if [ "$2" = "acmewrapper" ]; then
-    /jffs/addons/acme-wrapper/acme-wrapper.sh service_event "$1" "$2"
-fi
+case "$2" in
+    acmewrapper|acmewrapperstatus)
+        /jffs/addons/acme-wrapper/acme-wrapper.sh service_event "$1" "$2"
+        ;;
+esac
 SERVICEEVENT
     else
         # Create new service-event script
@@ -532,9 +534,11 @@ SERVICEEVENT
 #!/bin/sh
 
 # acme-wrapper: Handle web UI events
-if [ "$2" = "acmewrapper" ]; then
-    /jffs/addons/acme-wrapper/acme-wrapper.sh service_event "$1" "$2"
-fi
+case "$2" in
+    acmewrapper|acmewrapperstatus)
+        /jffs/addons/acme-wrapper/acme-wrapper.sh service_event "$1" "$2"
+        ;;
+esac
 SERVICEEVENT
     fi
 
@@ -549,7 +553,7 @@ remove_service_event() {
 
     if [ -f "$SERVICE_EVENT" ]; then
         # Remove our section
-        sed -i '/# acme-wrapper:/,/^fi$/d' "$SERVICE_EVENT"
+        sed -i '/# acme-wrapper:/,/^esac$/d' "$SERVICE_EVENT"
         # Clean up empty lines
         sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
     fi
