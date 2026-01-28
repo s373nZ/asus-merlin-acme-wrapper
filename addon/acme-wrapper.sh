@@ -511,13 +511,16 @@ setup_service_event() {
 
     mkdir -p "$SCRIPTS_DIR"
 
-    if [ -f "$SERVICE_EVENT" ]; then
-        # Check if already configured
-        if grep -q "$SCRIPT_NAME" "$SERVICE_EVENT"; then
-            print_output info "service-event hook already configured"
-            return 0
-        fi
+    # Always remove old entries first to ensure we have the latest format
+    if [ -f "$SERVICE_EVENT" ] && grep -q "$SCRIPT_NAME" "$SERVICE_EVENT"; then
+        print_output info "Removing old service-event hook..."
+        sed -i '/# acme-wrapper:/,/^esac$/d' "$SERVICE_EVENT"
+        sed -i '/# acme-wrapper:/,/^fi$/d' "$SERVICE_EVENT"
+        # Clean up empty lines
+        sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
+    fi
 
+    if [ -f "$SERVICE_EVENT" ]; then
         # Append to existing file
         cat >> "$SERVICE_EVENT" << 'SERVICEEVENT'
 
