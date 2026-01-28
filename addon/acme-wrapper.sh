@@ -514,9 +514,10 @@ setup_service_event() {
     # Always remove old entries first to ensure we have the latest format
     if [ -f "$SERVICE_EVENT" ] && grep -q "$SCRIPT_NAME" "$SERVICE_EVENT"; then
         print_output info "Removing old service-event hook..."
-        sed -i '/# acme-wrapper:/,/^esac$/d' "$SERVICE_EVENT"
-        sed -i '/# acme-wrapper:/,/^fi$/d' "$SERVICE_EVENT"
-        # Clean up empty lines
+        # Use robust removal: delete comment + next 6 lines
+        sed -i '/# acme-wrapper: Handle web UI events/,+6d' "$SERVICE_EVENT"
+        # Clean up any remaining fragments
+        sed -i "/^if \[ \"\\$2\" = \"acmewrapper\" \]/,+2d" "$SERVICE_EVENT"
         sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
     fi
 
@@ -555,9 +556,14 @@ remove_service_event() {
     print_output info "Removing service-event hook..."
 
     if [ -f "$SERVICE_EVENT" ]; then
-        # Remove our section (handle both old 'fi' and new 'esac' endings)
-        sed -i '/# acme-wrapper:/,/^esac$/d' "$SERVICE_EVENT"
-        sed -i '/# acme-wrapper:/,/^fi$/d' "$SERVICE_EVENT"
+        # Use a more robust removal: delete the comment line + next N lines
+        # This works regardless of if/case format
+        # Old format: 4 lines (comment + if + command + fi)
+        # New format: 6 lines (comment + case + pattern + command + ;; + esac)
+        # Delete comment + next 6 lines to cover both
+        sed -i '/# acme-wrapper: Handle web UI events/,+6d' "$SERVICE_EVENT"
+        # Clean up any remaining fragments or empty blocks
+        sed -i "/^if \[ \"\\$2\" = \"acmewrapper\" \]/,+2d" "$SERVICE_EVENT"
         # Clean up empty lines
         sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
     fi
