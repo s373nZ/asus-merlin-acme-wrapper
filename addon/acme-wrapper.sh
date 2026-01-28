@@ -552,8 +552,9 @@ remove_service_event() {
     print_output info "Removing service-event hook..."
 
     if [ -f "$SERVICE_EVENT" ]; then
-        # Remove our section
+        # Remove our section (handle both old 'fi' and new 'esac' endings)
         sed -i '/# acme-wrapper:/,/^esac$/d' "$SERVICE_EVENT"
+        sed -i '/# acme-wrapper:/,/^fi$/d' "$SERVICE_EVENT"
         # Clean up empty lines
         sed -i '/^$/N;/^\n$/d' "$SERVICE_EVENT"
     fi
