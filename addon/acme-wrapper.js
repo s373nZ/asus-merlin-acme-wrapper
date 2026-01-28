@@ -175,35 +175,79 @@ function onDnsApiChange() {
 
 /**
  * Update status display
- * Note: Without AJAX endpoints, we show static info embedded at install time
+ * Reads system status from custom_settings (updated by backend)
  */
 function updateStatusDisplay() {
-    var version = getSetting('version', '');
-    var installed = getSetting('installed', '');
+    // Parse system status from custom_settings
+    var sysStatus = getSetting('sys_status', '').split('|');
+    var mountStatus = sysStatus[0] || 'unknown';
+    var acmeVersion = sysStatus[1] || 'unknown';
+    var wrapperVersion = sysStatus[2] || '2.0.0';
 
-    document.getElementById('status-version').textContent = version || '2.0.0';
+    document.getElementById('status-version').textContent = wrapperVersion;
 
-    // Mount status - we can't check dynamically without AJAX, show instructions
-    document.getElementById('status-mount').innerHTML =
-        '<span class="status-ok">See SSH</span> ' +
-        '<span style="color:#888; font-size:11px;">(Run: mount | grep acme.sh)</span>';
+    // Mount status
+    if (mountStatus === 'mounted') {
+        document.getElementById('status-mount').innerHTML =
+            '<span class="status-ok">Active</span>';
+    } else if (mountStatus === 'not_mounted') {
+        document.getElementById('status-mount').innerHTML =
+            '<span class="status-error">Not Mounted</span>';
+    } else {
+        document.getElementById('status-mount').innerHTML =
+            '<span style="color:#888;">Unknown</span> ' +
+            '<span style="color:#888; font-size:11px;">(Click "Refresh Status")</span>';
+    }
 
-    document.getElementById('status-acme').innerHTML =
-        '<span style="color:#888; font-size:11px;">Check via SSH: /opt/home/acme.sh/acme.sh --version</span>';
+    // acme.sh version
+    if (acmeVersion && acmeVersion !== 'not_installed') {
+        document.getElementById('status-acme').textContent = acmeVersion;
+    } else if (acmeVersion === 'not_installed') {
+        document.getElementById('status-acme').innerHTML =
+            '<span class="status-error">Not Installed</span>';
+    } else {
+        document.getElementById('status-acme').innerHTML =
+            '<span style="color:#888;">Unknown</span> ' +
+            '<span style="color:#888; font-size:11px;">(Click "Refresh Status")</span>';
+    }
 }
 
 /**
  * Show certificate information
- * Note: Without AJAX endpoints, we provide instructions for checking via SSH
+ * Reads certificate status from custom_settings (updated by backend)
  */
 function showCertificateInfo() {
     var tbody = document.getElementById('cert-table-body');
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">' +
-        'To view certificates, run on router via SSH:<br>' +
-        '<code style="background:#1a1a1a; padding:2px 6px; border-radius:3px;">ls -la /jffs/.le/*_ecc/</code><br><br>' +
-        'Or check expiration:<br>' +
-        '<code style="background:#1a1a1a; padding:2px 6px; border-radius:3px;">openssl x509 -in /jffs/.le/DOMAIN_ecc/fullchain.pem -noout -dates</code>' +
-        '</td></tr>';
+    var certStatus = getSetting('cert_status', '');
+
+    if (!certStatus) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">' +
+            'No certificates found. Click "Refresh Status" to update.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    var certs = certStatus.split('\\n').filter(function(c) { return c; });
+
+    if (certs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#AAAAAA;">' +
+            'No certificates found. Click "Refresh Status" to update.</td></tr>';
+        return;
+    }
+
+    certs.forEach(function(cert) {
+        var parts = cert.split('|');
+        var domain = parts[0] || '';
+        var expiry = parts[1] || '';
+        var status = parts[2] || '';
+
+        var row = document.createElement('tr');
+        var statusClass = status === 'valid' ? 'status-ok' : 'status-error';
+        row.innerHTML = '<td>' + domain + '</td>' +
+            '<td>' + expiry + '</td>' +
+            '<td><span class="' + statusClass + '">' + status + '</span></td>';
+        tbody.appendChild(row);
+    });
 }
 
 /**
@@ -329,8 +373,19 @@ function closeLogModal() {
 }
 
 /**
- * Refresh status - reloads the page
+ * Refresh status - triggers backend status update then reloads page
  */
 function acmeWrapperRefreshStatus() {
-    location.reload();
+    document.form.action_script.value = 'start_acmewrapperstatus';
+    document.form.action_wait.value = '3';
+
+    if (typeof showLoading === 'function') {
+        showLoading();
+    }
+
+    document.form.submit();
+
+    setTimeout(function() {
+        location.reload();
+    }, 4000);
 }

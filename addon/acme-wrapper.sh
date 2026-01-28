@@ -721,6 +721,9 @@ EOF
     # Mount wrapper
     mount_wrapper
 
+    # Initialize status
+    update_status_settings
+
     # Store installation info
     set_setting "version" "$SCRIPT_VERSION"
     set_setting "installed" "$(date '+%Y-%m-%d %H:%M:%S')"
@@ -942,6 +945,68 @@ menu_status() {
 }
 
 ################################################################################
+# Status Gathering Functions
+################################################################################
+
+# Get certificate status as pipe-delimited string
+# Format: domain|expiry|status\ndomain|expiry|status
+get_certificate_status() {
+    local status=""
+    local le_dir="${LE_DIR}"
+
+    for cert_dir in "$le_dir"/*_ecc; do
+        [ -d "$cert_dir" ] || continue
+        local domain
+        domain=$(basename "$cert_dir" | sed 's/_ecc$//')
+        local fullchain="$cert_dir/fullchain.cer"
+
+        if [ -f "$fullchain" ]; then
+            local expiry
+            expiry=$(openssl x509 -enddate -noout -in "$fullchain" 2>/dev/null | cut -d= -f2)
+            # Format: domain|expiry|status
+            if [ -n "$expiry" ]; then
+                status="${status}${domain}|${expiry}|valid\\n"
+            fi
+        fi
+    done
+    printf '%s' "$status"
+}
+
+# Get system status as pipe-delimited string
+# Format: mount_status|acme_version|wrapper_version
+get_system_status() {
+    local mount_status="not_mounted"
+    local acme_version="not_installed"
+    local wrapper_version="${SCRIPT_VERSION}"
+
+    # Check mount
+    if mount | grep -q "acme.sh"; then
+        mount_status="mounted"
+    fi
+
+    # Get acme.sh version
+    if [ -x "$REAL_ACME_SH" ]; then
+        acme_version=$("$REAL_ACME_SH" --version 2>/dev/null | head -1)
+    fi
+
+    printf '%s|%s|%s' "$mount_status" "$acme_version" "$wrapper_version"
+}
+
+# Update status in custom_settings
+update_status_settings() {
+    local cert_status
+    local sys_status
+
+    cert_status=$(get_certificate_status)
+    sys_status=$(get_system_status)
+
+    am_settings_set "${SCRIPT_NAME}_cert_status" "$cert_status"
+    am_settings_set "${SCRIPT_NAME}_sys_status" "$sys_status"
+
+    print_output info "Status updated in custom_settings"
+}
+
+################################################################################
 # Service Event Handler
 ################################################################################
 
@@ -951,8 +1016,22 @@ handle_service_event() {
 
     case "$action" in
         start)
-            # Called when web UI saves settings
-            webui_apply
+            case "$event" in
+                acmewrapper)
+                    # Called when web UI saves settings
+                    webui_apply
+                    update_status_settings
+                    ;;
+                acmewrapperstatus)
+                    # Called when web UI refreshes status
+                    update_status_settings
+                    ;;
+                *)
+                    # Default: apply settings (for backward compatibility)
+                    webui_apply
+                    update_status_settings
+                    ;;
+            esac
             ;;
         restart)
             # Called when user clicks restart
