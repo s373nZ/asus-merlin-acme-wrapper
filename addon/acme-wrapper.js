@@ -380,6 +380,8 @@ function closeLogModal() {
  * Refresh status - triggers backend status update then reloads page
  */
 function acmeWrapperRefreshStatus() {
+    // Merlin requires amng_custom to be set for form processing
+    document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
     document.form.action_script.value = 'start_acmewrapperstatus';
     document.form.action_wait.value = '3';
 
