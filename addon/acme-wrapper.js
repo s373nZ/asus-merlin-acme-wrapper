@@ -199,8 +199,9 @@ function updateStatusDisplay() {
             '<span style="color:#888; font-size:11px;">(Click "Refresh Status")</span>';
     }
 
-    // acme.sh version
+    // acme.sh version - convert underscores back to spaces
     if (acmeVersion && acmeVersion !== 'not_installed') {
+        acmeVersion = acmeVersion.replace(/_/g, ' ');
         document.getElementById('status-acme').textContent = acmeVersion;
     } else if (acmeVersion === 'not_installed') {
         document.getElementById('status-acme').innerHTML =
@@ -240,6 +241,9 @@ function showCertificateInfo() {
         var domain = parts[0] || '';
         var expiry = parts[1] || '';
         var status = parts[2] || '';
+
+        // Convert underscores back to spaces for display
+        expiry = expiry.replace(/_/g, ' ');
 
         var row = document.createElement('tr');
         var statusClass = status === 'valid' ? 'status-ok' : 'status-error';

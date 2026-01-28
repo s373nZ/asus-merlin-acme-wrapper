@@ -972,7 +972,9 @@ get_certificate_status() {
             local expiry
             expiry=$(openssl x509 -enddate -noout -in "$fullchain" 2>/dev/null | cut -d= -f2)
             # Format: domain|expiry|status
+            # Replace spaces with underscores to avoid parsing issues in custom_settings
             if [ -n "$expiry" ]; then
+                expiry=$(echo "$expiry" | tr ' ' '_')
                 status="${status}${domain}|${expiry}|valid\\n"
             fi
         fi
@@ -995,6 +997,8 @@ get_system_status() {
     # Get acme.sh version
     if [ -x "$REAL_ACME_SH" ]; then
         acme_version=$("$REAL_ACME_SH" --version 2>/dev/null | head -1)
+        # Replace spaces with underscores to avoid parsing issues in custom_settings
+        acme_version=$(echo "$acme_version" | tr ' ' '_')
     fi
 
     printf '%s|%s|%s' "$mount_status" "$acme_version" "$wrapper_version"
