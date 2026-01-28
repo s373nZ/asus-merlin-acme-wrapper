@@ -844,6 +844,10 @@ menu_update() {
     unmount_webui
     mount_webui
 
+    # Regenerate service-event hook (in case hook format changed)
+    remove_service_event
+    setup_service_event
+
     # Update version in settings
     set_setting "version" "$SCRIPT_VERSION"
     set_setting "updated" "$(date '+%Y-%m-%d %H:%M:%S')"
@@ -1004,8 +1008,8 @@ update_status_settings() {
     cert_status=$(get_certificate_status)
     sys_status=$(get_system_status)
 
-    am_settings_set "${SCRIPT_NAME}_cert_status" "$cert_status"
-    am_settings_set "${SCRIPT_NAME}_sys_status" "$sys_status"
+    set_setting "cert_status" "$cert_status"
+    set_setting "sys_status" "$sys_status"
 
     print_output info "Status updated in custom_settings"
 }
